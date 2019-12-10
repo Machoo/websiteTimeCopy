@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+    <div class="w3-row w3-light-grey w3-border-bottom w3-border-black tabBar">
+        <button class="w3-row-item w3-button" onclick="openTab('matches')">Matches</button>
+        <button class="w3-row-item w3-button" onclick="openTab('teams')">Teams</button>
+        <button class="w3-row-item w3-button" onclick="openTab('info')" id="infoTab">Info</button>
+        <button class="w3-row-item w3-button" onclick="openTab('sync')">Sync</button>
+    </div>
+
+    <div id="matches" class="w3-container tab" style="display:none">
+        <div class='w3-bar-block' id='matchListContainer'></div>
+    </div>
+
+    <div id="scouting" class="w3-container tab" style="display:none">
+        <div class="scoutCont">
+            <img src="https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/frcField2019.jpeg" height="540px">
+            <img src="https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/rocketShip.JPG" height="540px">
+            <div class="button scout_button hab1" onclick = "scoutButton('habStart1')" id="hab1Button"></div>
+            <div class="button scout_button hab2" onclick = "scoutButton('habStart2')" id="hab2Button"></div>
+            <div class="button scout_button hab3" onclick = "scoutButton('habEnd3')" id="habEnd3"></div>
+            <div class="button scout_button cargoshipHatch" onclick = "scoutButton('lvl0Hatches')" id="lvl0Hatches"></div>
+            <div class="button scout_button cargoshipCargo" onclick = "scoutButton('lvl0Cargo')" id="lvl0Cargo"></div>
+            <div class="button scout_button rocket1Hatch" onclick = "scoutButton('lvl1Hatches')" id="lvl1Hatches"></div>
+            <div class="button scout_button rocket1Cargo" onclick = "scoutButton('lvl1Cargo')" id="lvl1Cargo"></div>
+            <div class="button scout_button rocket2Hatch" onclick = "scoutButton('lvl2Hatches')" id="lvl2Hatches"></div>
+            <div class="button scout_button rocket2Cargo" onclick = "scoutButton('lvl2Cargo')" id="lvl2Cargo"></div>
+            <div class="button scout_button rocket3Hatch" onclick = "scoutButton('lvl3Hatches')" id="lvl3Hatches"></div>
+            <div class="button scout_button rocket3Cargo" onclick = "scoutButton('lvl3Cargo')" id="lvl3Cargo"></div>
+            <div class="w3-button" onclick = "scoutButton('teammatesCarried')" id="teammatesCarried">+1 Teammates Lifted</div>
+            <p id="scoutingLog" style="text-align: right; float: right">Scouted Data:</p>
+        </div>
+        <button onclick="startMatch()" id="matchButton">Start Match</button>
+    </div>
+
+
+    <div id="teams" class="w3-container tab" style="display:none">
+        <table class="w3-table" id="teamsListContainer"></table>
+    </div>
+
+
+    <div id="info" class="w3-container tab" style="display:none">
+        <table class="w3-table" id="statsList"></table>
+    </div>
+
+
+    <div id="sync" class="w3-container tab syncy" style="display:none">
+        <p></p>
+        Event Code: <input type="text" name="eventCode" id="eventCodeIn">
+        <p></p>
+        <div style="width: 50%; margin: auto">
+            <button class="w3-button" onclick="importTBA()" style="display: inline-block">Import from TBA</button>
+            <p id="checkImportTBA" style="display: inline-block">Not downloaded</p>
+        </div>
+        <p></p>
+        <div style="width: 50%; margin: auto">
+            <button class="w3-button" onclick="importFB()" id="importFB" style="display: inline-block">Import from Firebase</button>
+            <p id="checkImportFB" style="display: inline-block">Not downloaded</p>
+        </div>
+        <p></p>
+        <div style="width: 50%; margin: auto">
+            <button class="w3-button" onclick="exportFB()" id="exportFB" style="display: inline-block">Export to Firebase</button>
+            <p id="checkExportFB" style="display: inline-block">Not uploaded</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/7.4.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.4.0/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.4.0/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/5.6.0/math.js"></script>
+    <script src="./min_tba.js"></script>
+
+    <script>
+        var firebaseConfig = {
+            apiKey: "AIzaSyCOGJ0exktXUY_jewgj4hmqt3UfyIfh_x0",
+            authDomain: "scootingapp.firebaseapp.com",
+            databaseURL: "https://scootingapp.firebaseio.com",
+            projectId: "scootingapp",
+            storageBucket: "scootingapp.appspot.com",
+            messagingSenderId: "557439690320",
+            appId: "1:557439690320:web:0abe450663381b2b3d1355",
+            measurementId: "G-QEXK8P2F85"
+        };
+        firebase.initializeApp(firebaseConfig);
+        firebase.analytics();
+        var db = firebase.firestore();
+        fbTeams = db.collection("teams"); //this has all initialized the Firebase connection
+        
+        var rawMatchImport = [];
+        function importTBA() {
+            var tba = new TBA();
+            tba.getTeams(document.getElementById("eventCodeIn").value, function(teams) {
+                document.getElementById("checkImportTBA").innerHTML = "Downloaded";
+                for (i = 0; i < teams.length; i++) {
+                    var teamExistsImport = false;
+                    stats.forEach(function(teamThing) {
+                        if (teamThing.team_number == teams[i].substring(3)) {
+                            teamExistsImport = true;
+                        }
+                    });
+                    if (!teamExistsImport) {
+                        stats.push({"team_number": teams[i].substring(3),
+                                    "lvl1Hatches": 0,
+                                    "lvl1Cargo": 0,
+                                    "lvl2Hatches": 0,
+                                    "lvl2Cargo": 0,
+                                    "lvl3Hatches": 0,
+                                    "lvl3Cargo": 0,
+                                    "habStart1": 0,
+                                    "habStart2": 0,
+                                    "habEnd0": 0,
+                                    "habEnd1": 0,
+                                    "habEnd2": 0,
+                                    "habEnd3": 0,
+                                    "teammatesCarried": 0,
+                                    "matches": []});
+                    }
+                }
+            });
+
+            tba.getMatches(document.getElementById("eventCodeIn").value, function(matches) {
+                rawMatchImport = matches;
+            })
+
+            butt = document.getElementById("checkImportTBA");
+            butt.style.backgroundColor = "rgb(0, 255, 0, 1)";
+            var bopacity = 1;
+            var fadeEffect = setInterval(function () {
+                if (bopacity > 0) {
+                    bopacity -= 0.005;
+                    butt.style.backgroundColor = "rgb(0, 255, 0, " + bopacity + ")";
+                } else {
+                    clearInterval(fadeEffect);
+                }
+            }, 15);
+        }
+
+        var docs = [];
+        var docsID = [];
+        var stats = [];
+        var teamTemp = 0;
+        var matchRow = 0;
+        var matchCol = 0;
+        var firstMatch = 0;
+        var variables = ["Num", "Lvl 1<br>Hatches", "Lvl 1<br>Cargo", "Lvl 2<br>Hatches", "Lvl 2<br>Cargo", "Lvl 3<br>Hatches", "Lvl 3<br>Cargo", "Hab<br>Start 1", "Hab<br>Start 2", "Hab<br>End 0", "Hab<br>End 1", "Hab<br>End 2", "Hab<br>End 3", "Teammates<br>Carried"];
+        var variablesReal = ["team_number", "lvl1Hatches", "lvl1Cargo", "lvl2Hatches", "lvl2Cargo", "lvl3Hatches", "lvl3Cargo", "habStart1", "habStart2", "habEnd0", "habEnd1", "habEnd2", "habEnd3", "teammatesCarried"];
+        openTab('sync');
+
+        function importFB() {
+            fbTeams.get().then(function(querySnapshot) {
+                querySnapshot.forEach(function(doc) {
+                    docs.push(doc.data());
+                    docsID.push(doc.id);
+                    var teamExistsImportFB = false;
+                    stats.forEach(function(teamThing) {
+                        if (teamThing.team_number == doc.data().team_number) {
+                            teamExistsImportFB = true;
+                        }
+                    });
+                    if (!teamExistsImportFB) {
+                        stats.push({"team_number": doc.data().team_number,
+                                    "lvl1Hatches": doc.data().lvl1Hatches,
+                                    "lvl1Cargo": doc.data().lvl1Cargo,
+                                    "lvl2Hatches": doc.data().lvl2Hatches,
+                                    "lvl2Cargo": doc.data().lvl2Cargo,
+                                    "lvl3Hatches": doc.data().lvl3Hatches,
+                                    "lvl3Cargo": doc.data().lvl3Cargo,
+                                    "habStart1": doc.data().habStart1,
+                                    "habStart2": doc.data().habStart2,
+                                    "habEnd0": doc.data().habEnd0,
+                                    "habEnd1": doc.data().habEnd1,
+                                    "habEnd2": doc.data().habEnd2,
+                                    "habEnd3": doc.data().habEnd3,
+                                    "teammatesCarried": doc.data().teammatesCarried,
+                                    "matches": doc.data().matches});
+                    }
+                });
+            });
+
+            butt = document.getElementById("checkImportFB");
+            butt.style.backgroundColor = "rgb(0, 255, 0, 1)";
+            var bopacity = 1;
+            var fadeEffect = setInterval(function () {
+                if (bopacity > 0) {
+                    bopacity -= 0.005;
+                    butt.style.backgroundColor = "rgb(0, 255, 0, " + bopacity + ")";
+                } else {
+                    clearInterval(fadeEffect);
+                }
+            }, 15);
+
+            setTimeout(function() {
+                for (var i = 0; i < docs.length; i++) {
+                    for (var j = 0; j < stats.length; j++) {
+                        if (docs[i].team_number == stats[j].team_number) {
+                            stats[j] = docs[i];
+                        }
+                    }
+                }
+
+                document.getElementById("checkImportFB").innerHTML = "Downloaded";
+            }, 3000);
+        }
+
+        function exportFB() {
+            for (var i = 0; i < stats.length; i++) { //iterate through the stats array
+                var teamExists = false;
+                for (var j = 0; j < docs.length; j++) { //iterate through the docs
+                    if (stats[i].team_number == docs[j].team_number) { //check if the team already exists...
+                        for (var k = 0; k < stats[i].matches.length; k++) { //for each match (from stats)...
+                            var matchExists = false;
+                            for (var l = 0; l < docs[j].matches.length - 1; l++) { //for each match (from docs)...
+                                if (stats[i].matches[k] == docs[j].matches[l]) { //if the matches match...
+                                    matchExists = true; //don't add a new one
+                                }
+                            }
+                            if (!matchExists) { //otherwise add a new one
+                                db.collection("teams").doc(docsID[j]).set(stats[i]);
+                            }
+                        }
+                        teamExists = true;
+                    }
+                }
+                if (!teamExists) {
+                    fbTeams.add(stats[i]);
+                }
+            }
+
+            butt = document.getElementById("checkExportFB");
+            butt.style.backgroundColor = "rgb(0, 255, 0, 1)";
+            var bopacity = 1;
+            var fadeEffect = setInterval(function () {
+                if (bopacity > 0) {
+                    bopacity -= 0.005;
+                    butt.style.backgroundColor = "rgb(0, 255, 0, " + bopacity + ")";
+                } else {
+                    clearInterval(fadeEffect);
+                }
+            }, 15);
+
+            setTimeout(function() {
+                document.getElementById("checkExportFB").innerHTML = "Uploaded";
+            }, 3000);
+        }
+
+        function showTeamsList() {
+            while (document.getElementById('teamsListContainer').firstChild) {
+                document.getElementById('teamsListContainer').removeChild(document.getElementById('teamsListContainer').firstChild);
+            }
+            var teamsList = document.createElement('w3-bar-block');
+
+            for (var i = 0; i < variables.length; i++) {
+                var table_variable = document.createElement('td');
+                table_variable.setAttribute('class', 'w3-button');
+                table_variable.setAttribute('onclick', 'sortTeams(variablesReal[' + i + '], ' + i + ')');
+                table_variable.innerHTML = variables[i];
+                document.getElementById('teamsListContainer').appendChild(table_variable);
+            }
+
+            for (var i = 0; i < stats.length; i++) {
+                var team = document.createElement('tr');
+                if (i % 2 == 0) {
+                    team.setAttribute("style", "background-color: rgb(220, 220, 220)");
+                }
+
+                for (var j = 0; j < variablesReal.length; j++) {
+                    var table_element = document.createElement('td');
+                    if (j == 0) {
+                        table_element.setAttribute('class', 'w3-button w3-left-align');
+                        table_element.setAttribute('onclick', 'showTeam(' + stats[i].team_number + ')');
+                    }
+                    table_element.innerHTML = stats[i][variablesReal[j]];
+                    team.appendChild(table_element);
+                }
+
+                document.getElementById('teamsListContainer').appendChild(team);
+            }
+        }
+
+        function sortTeams(sortStat, col) {
+            if (sortStat == "team_number") {
+                stats.sort(function(a, b) {return a.team_number - b.team_number});
+            } else {
+                stats.sort(function(a, b) {return b[sortStat] - a[sortStat]});
+            }
+            showTeamsList();
+            for (var i = 0; i < stats.length; i++) {
+                document.getElementById('teamsListContainer').rows[i].cells[col].setAttribute('style', 'background-color: rgb(0, 255, 0)');
+                if (i % 2 == 1) {
+                    document.getElementById('teamsListContainer').rows[i].cells[col].setAttribute('style', 'background-color: rgb(150, 255, 150)');
+                }
+            }
+        }
+
+        function showMatchList() {
+            var matchList = document.createElement('w3-bar-block');
+
+            var actualMatchNum = 0;
+            for (var i = 0; i < rawMatchImport.length; i++) {
+                if (rawMatchImport[i].comp_level == "qm") {
+                    actualMatchNum += 1;
+                    var actualMatch = rawMatchImport.find(function(matchThing) {return ((actualMatchNum == matchThing.match_number) && (matchThing.comp_level == "qm"));});
+                    var match = document.createElement('w3-bar-item');
+                    match.setAttribute('class', 'w3-bar-item w3-row');
+
+                    for (var r = 0; r < 3; r++) {
+                        var teamR = document.createElement('w3-bar-item');
+                        teamR.setAttribute('class', 'w3-col w3-button w3-center');
+                        teamR.setAttribute('style', 'background-color: red; color: white');
+                        teamR.setAttribute('onclick', 'scoutTeam(' + rawMatchImport[i].alliances.red.team_keys[r].substring(3) + ',' + i + ',' + r + ')');
+                        teamR.appendChild(document.createTextNode(actualMatch.alliances.red.team_keys[r].substring(3)));
+                        match.appendChild(teamR);
+                    }
+
+                    var matchNum = document.createElement('w3-bar-item');
+                    matchNum.setAttribute('class', 'w3-col w3-center w3-button');
+                    matchNum.setAttribute('onclick', 'alert("Stop that please.")');
+                    matchNum.innerHTML = actualMatchNum;
+                    if (i % 2 == 0) {
+                        matchNum.setAttribute('style', 'background-color: lightgrey');
+                    }
+                    match.appendChild(matchNum);
+
+                    for (var b = 0; b < 3; b++) {
+                        var teamB = document.createElement('w3-bar-item');
+                        teamB.setAttribute('class', 'w3-col w3-button w3-center');
+                        teamB.setAttribute('style', 'background-color: blue; color: white');
+                        teamB.setAttribute('onclick', 'scoutTeam(' + rawMatchImport[i].alliances.blue.team_keys[b].substring(3) + ',' + i + ',' + (b + 4) + ')');
+                        teamB.appendChild(document.createTextNode(rawMatchImport[i].alliances.blue.team_keys[b].substring(3)));
+                        match.appendChild(teamB);
+                    }
+                    matchList.appendChild(match);
+                }
+            }
+
+            while (document.getElementById('matchListContainer').firstChild) {
+                document.getElementById('matchListContainer').removeChild(document.getElementById('matchListContainer').firstChild);
+            }
+            
+            document.getElementById('matchListContainer').appendChild(matchList);
+            if (firstMatch > 0) {
+                document.getElementById('matchListContainer').children[0].children[matchRow].children[matchCol].setAttribute('style', 'background-color: rgb(0, 255, 0); color: white;');
+            }
+        }
+
+        for (var i = 1; i < variables.length; i++) {
+            var table_variable = document.createElement('td');
+            table_variable.setAttribute('class', 'w3-button');
+            table_variable.setAttribute('style', 'border-color: black; border-bottom-style: solid');
+            table_variable.innerHTML = variables[i];
+            if (i == 1) {
+                table_variable.innerHTML = "Match<br>Num";
+            }
+            document.getElementById('statsList').appendChild(table_variable);
+        }
+
+        var total = document.createElement('tr');
+        total.setAttribute("style", "background-color: rgb(220, 220, 220)");
+        var totalLabel = document.createElement('td');
+        totalLabel.innerHTML = "Total";
+        total.appendChild(totalLabel);
+        for (var j = 2; j < variablesReal.length; j++) {
+            var table_total = document.createElement('td');
+            table_total.innerHTML = 0;
+            total.appendChild(table_total);
+        }
+        var rows = 1;
+        document.getElementById('statsList').appendChild(total);
+
+        function showTeam(teamNum) {
+            while (document.getElementById('statsList').children[15]) {
+                document.getElementById('statsList').removeChild(document.getElementById('statsList').children[15]);
+            }
+
+            for (var i = 1; i < variablesReal.length - 1; i++) {
+                document.getElementById('statsList').rows[0].cells[i].innerHTML = stats.find(function(x) {return x.team_number == teamNum;})[variablesReal[i + 1]];
+            }
+
+            for (var i = 0; i < stats.find(function(x) {return x.team_number == teamNum;}).matches.length; i++) {
+                var match = document.createElement('tr');
+                if (i % 2 != 0) {
+                    match.setAttribute("style", "background-color: rgb(220, 220, 220)");
+                }
+                var match_num = document.createElement('td');
+                match_num.innerHTML = i + 1;
+                match.appendChild(match_num);
+                for (var j = 2; j < variablesReal.length; j++) {
+                    var table_element = document.createElement('td');
+                    table_element.innerHTML = stats.find(function(x) {return x.team_number == teamNum;}).matches[i][variablesReal[j]];
+                    match.appendChild(table_element);
+                }
+                rows += 1;
+                document.getElementById('statsList').appendChild(match);
+            }
+            
+            document.getElementById("infoTab").innerHTML = teamNum;
+            openTab('info');
+        }
+
+        function scoutTeam(teamNum, teamRow, teamCol) {
+            teamTemp = teamNum;
+            matchRow = teamRow;
+            matchCol = teamCol;
+            document.getElementById("hab1Button").setAttribute("onclick", "scoutButton('habStart1')");
+            document.getElementById("hab2Button").setAttribute("onclick", "scoutButton('habStart2')");
+            document.getElementById("matchButton").setAttribute("onclick", "startMatch()");
+            document.getElementById("matchButton").innerHTML = "Start Match";
+            stats.find(function(x) {return x.team_number == teamTemp;}).matches.push({
+                "lvl1Hatches": 0,
+                "lvl1Cargo": 0,
+                "lvl2Hatches": 0,
+                "lvl2Cargo": 0,
+                "lvl3Hatches": 0,
+                "lvl3Cargo": 0,
+                "habStart1": 0,
+                "habStart2": 0,
+                "habEnd0": 0,
+                "habEnd1": 0,
+                "habEnd2": 0,
+                "habEnd3": 0,
+                "teammatesCarried": 0});
+            openTab('scouting');
+        }
+
+        function scoutButton(stat) {
+            if (stat == "habStart1" || stat == "habStart2") {
+                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].habStart1 = 0;
+                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].habStart2 = 0;
+                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1][stat] = 1;
+            } else if (stat == "habEnd0" || stat == "habEnd1" || stat == "habEnd2" || stat == "habEnd3") {
+                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].habEnd0 = 0;
+                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].habEnd1 = 0;
+                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].habEnd2 = 0;
+                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].habEnd3 = 0;
+                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1][stat] = 1;
+            } else if (stat == "hab0Hatches") {
+                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].lvl1Hatches += 1;
+            } else if (stat == "hab0Cargo") {
+                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].lvl1Cargo += 1;
+            } else {
+                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1][stat] += 1;
+            }
+            
+            if (stat != "teammatesCarried") {
+                var butt = document.getElementById("hab1Button");
+                if (stat == "habStart1" || stat == "habEnd1") {
+                    butt = document.getElementById("hab1Button");
+                } else if (stat == "habStart2" || stat == "habEnd2") {
+                    butt = document.getElementById("hab2Button");
+                } else {
+                    butt = document.getElementById(stat);
+                }
+                butt.setAttribute("style", "background-color: rgb(0, 255, 0);");
+                var fadeEffect = setInterval(function () {
+                    if (!butt.style.opacity) {
+                        butt.style.opacity = 1;
+                    }
+                    if (butt.style.opacity > 0) {
+                        butt.style.opacity -= 0.005;
+                    } else {
+                        clearInterval(fadeEffect);
+                    }
+                }, 10);
+            }
+            document.getElementById("scoutingLog").innerHTML += "<br>" + stat;
+        }
+
+        function startMatch() {
+            document.getElementById("hab1Button").setAttribute("onclick", "scoutButton('habEnd1')");
+            document.getElementById("hab2Button").setAttribute("onclick", "scoutButton('habEnd2')");
+            document.getElementById("matchButton").setAttribute("onclick", "endMatch()");
+            document.getElementById("matchButton").innerHTML = "Submit Match";
+        }
+
+        function endMatch() {
+            var matchy = stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1];
+            if (matchy.habEnd1 == 0 && matchy.habEnd2 == 0 && matchy.habEnd3 == 0) {
+                matchy.habEnd0 = 1;
+            }
+            for (var i = 0; i < variablesReal.length; i++) {
+                stats.find(function(x) {return x.team_number == teamTemp;})[variablesReal[i + 2]] += stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1][variablesReal[i + 2]];
+            }
+            firstMatch += 1;
+            openTab("matches");
+        }
+
+        function openTab(tab) {
+            var x = document.getElementsByClassName("tab");
+            for (var i = 0; i < x.length; i++) {
+                x[i].style.display = "none";
+            }
+            if (tab == 'teams') {
+                showTeamsList();
+            }
+            if (tab == 'matches') {
+                showMatchList();
+            }
+            if (tab == 'scouting') {
+                document.getElementById("infoTab").innerHTML = teamTemp;
+            }
+            document.getElementById(tab).style.display = "block";
+        }
+    </script>
+</html>
+
+
+
+<style>
+    body {
+        background-color: white;
+        color: blue;
+    }
+
+    .tabBar {
+        height: 31px;
+    }
+
+    .tab {
+        background-color: white;
+    }
+
+    .syncy {
+        text-align: center;
+    }
+
+    .w3-center {
+        width: calc(100% / 7);
+    }
+
+    .w3-row-item {
+        font-size: 20px;
+        width: 24.5%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .label1 {
+        width: 40px;
+    }
+
+    .scoutCont {
+        background-color: lightgrey;
+        width: 100%;
+        margin: auto;
+    }
+
+    .scout_button {
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0);
+    }
+
+    .hab1 {
+        top: 115px;
+        left: 162px;
+        width: 124px;
+        height: 78px;
+    }
+
+    .hab2 {
+        top: 37px;
+        left: 181px;
+        width: 66px;
+        height: 78px;
+    }
+
+    .hab3 {
+        top: 37px;
+        left: 247px;
+        width: 39px;
+        height: 78px;
+    }
+
+    .cargoshipHatch {
+        top: 450px;
+        left: 210px;
+        width: 35px;
+        height: 106px;
+    }
+
+    .cargoshipCargo {
+        top: 450px;
+        left: 245px;
+        width: 41px;
+        height: 106px;
+    }
+
+    .rocket1Hatch {
+        top: 422px;
+        left: 437px;
+        width: 70px;
+        height: 70px;
+    }
+
+    .rocket1Cargo {
+        top: 395px;
+        left: 383px;
+        width: 53px;
+        height: 58px;
+    }
+
+    .rocket2Hatch {
+        top: 323px;
+        left: 437px;
+        width: 70px;
+        height: 70px;
+    }
+
+    .rocket2Cargo {
+        top: 296px;
+        left: 383px;
+        width: 53px;
+        height: 58px;
+    }
+
+    .rocket3Hatch {
+        top: 224px;
+        left: 437px;
+        width: 70px;
+        height: 70px;
+    }
+
+    .rocket3Cargo {
+        top: 197px;
+        left: 383px;
+        width: 53px;
+        height: 58px;
+    }
+
+    @media only screen and (min-width: 1100px) {
+        .w3-row-item {
+            font-size: 20px;
+            width: 24.5%;
+            margin: 0;
+            padding: 0;
+        }
+    }
+</style>

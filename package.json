@@ -1,0 +1,14 @@
+{
+  "name": "scooterino",
+  "version": "1.0.0",
+  "description": "i have no idea what is happening",
+  "main": "index.js",
+  "scripts": {
+    "test": "openTab(sync)"
+  },
+  "author": "machoo",
+  "license": "ISC",
+  "dependencies": {
+    "firebase": "^7.4.0"
+  }
+}
