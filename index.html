@@ -54,6 +54,8 @@
             <p id="checkImportTBA" style="display: inline-block">Not downloaded</p>
         </div>
         <p></p>
+        API Key: <input type="text" name="aPIKey" id="aPIKeyIn">
+        <p></p>
         <div style="width: 50%; margin: auto">
             <button class="w3-button" onclick="importFB()" id="importFB" style="display: inline-block">Import from Firebase</button>
             <p id="checkImportFB" style="display: inline-block">Not downloaded</p>
@@ -74,7 +76,7 @@
 
     <script>
         var firebaseConfig = {
-            apiKey: "AIzaSyCOGJ0exktXUY_jewgj4hmqt3UfyIfh_x0",
+            apiKey: "hehe",//document.getElementById("aPIKeyIn").value,
             authDomain: "scootingapp.firebaseapp.com",
             databaseURL: "https://scootingapp.firebaseio.com",
             projectId: "scootingapp",
@@ -257,7 +259,7 @@
                 table_variable.setAttribute('onclick', 'sortTeams(variablesReal[' + i + '], ' + i + ')');
                 table_variable.innerHTML = variables[i];
                 document.getElementById('teamsListContainer').appendChild(table_variable);
-            }
+            } //fix hatches / cargo lvl 1 not updating
 
             for (var i = 0; i < stats.length; i++) {
                 var team = document.createElement('tr');
@@ -309,7 +311,7 @@
                         var teamR = document.createElement('w3-bar-item');
                         teamR.setAttribute('class', 'w3-col w3-button w3-center');
                         teamR.setAttribute('style', 'background-color: red; color: white');
-                        teamR.setAttribute('onclick', 'scoutTeam(' + rawMatchImport[i].alliances.red.team_keys[r].substring(3) + ',' + i + ',' + r + ')');
+                        teamR.setAttribute('onclick', 'scoutTeam(' + actualMatch.alliances.red.team_keys[r].substring(3) + ',' + (actualMatchNum - 1) + ',' + r + ')');
                         teamR.appendChild(document.createTextNode(actualMatch.alliances.red.team_keys[r].substring(3)));
                         match.appendChild(teamR);
                     }
@@ -327,8 +329,8 @@
                         var teamB = document.createElement('w3-bar-item');
                         teamB.setAttribute('class', 'w3-col w3-button w3-center');
                         teamB.setAttribute('style', 'background-color: blue; color: white');
-                        teamB.setAttribute('onclick', 'scoutTeam(' + rawMatchImport[i].alliances.blue.team_keys[b].substring(3) + ',' + i + ',' + (b + 4) + ')');
-                        teamB.appendChild(document.createTextNode(rawMatchImport[i].alliances.blue.team_keys[b].substring(3)));
+                        teamB.setAttribute('onclick', 'scoutTeam(' + actualMatch.alliances.blue.team_keys[b].substring(3) + ',' + (actualMatchNum - 1) + ',' + (b + 4) + ')');
+                        teamB.appendChild(document.createTextNode(actualMatch.alliances.blue.team_keys[b].substring(3)));
                         match.appendChild(teamB);
                     }
                     matchList.appendChild(match);
@@ -345,12 +347,12 @@
             }
         }
 
-        for (var i = 1; i < variables.length; i++) {
+        for (var i = 0; i < variables.length; i++) {
             var table_variable = document.createElement('td');
             table_variable.setAttribute('class', 'w3-button');
             table_variable.setAttribute('style', 'border-color: black; border-bottom-style: solid');
             table_variable.innerHTML = variables[i];
-            if (i == 1) {
+            if (i == 0) {
                 table_variable.innerHTML = "Match<br>Num";
             }
             document.getElementById('statsList').appendChild(table_variable);
@@ -361,7 +363,7 @@
         var totalLabel = document.createElement('td');
         totalLabel.innerHTML = "Total";
         total.appendChild(totalLabel);
-        for (var j = 2; j < variablesReal.length; j++) {
+        for (var j = 1; j < variablesReal.length; j++) {
             var table_total = document.createElement('td');
             table_total.innerHTML = 0;
             total.appendChild(table_total);
@@ -374,8 +376,8 @@
                 document.getElementById('statsList').removeChild(document.getElementById('statsList').children[15]);
             }
 
-            for (var i = 1; i < variablesReal.length - 1; i++) {
-                document.getElementById('statsList').rows[0].cells[i].innerHTML = stats.find(function(x) {return x.team_number == teamNum;})[variablesReal[i + 1]];
+            for (var i = 1; i < variablesReal.length; i++) {
+                document.getElementById('statsList').rows[0].cells[i].innerHTML = stats.find(function(x) {return x.team_number == teamNum;})[variablesReal[i]];
             }
 
             for (var i = 0; i < stats.find(function(x) {return x.team_number == teamNum;}).matches.length; i++) {
@@ -386,7 +388,7 @@
                 var match_num = document.createElement('td');
                 match_num.innerHTML = i + 1;
                 match.appendChild(match_num);
-                for (var j = 2; j < variablesReal.length; j++) {
+                for (var j = 1; j < variablesReal.length; j++) {
                     var table_element = document.createElement('td');
                     table_element.innerHTML = stats.find(function(x) {return x.team_number == teamNum;}).matches[i][variablesReal[j]];
                     match.appendChild(table_element);
@@ -421,26 +423,28 @@
                 "habEnd2": 0,
                 "habEnd3": 0,
                 "teammatesCarried": 0});
+            document.getElementById("scoutingLog").innerHTML = "Scouted Data:";
             openTab('scouting');
         }
 
         function scoutButton(stat) {
+            var lastMatch = stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1];
             if (stat == "habStart1" || stat == "habStart2") {
-                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].habStart1 = 0;
-                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].habStart2 = 0;
-                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1][stat] = 1;
+                lastMatch.habStart1 = 0;
+                lastMatch.habStart2 = 0;
+                lastMatch[stat] = 1;
             } else if (stat == "habEnd0" || stat == "habEnd1" || stat == "habEnd2" || stat == "habEnd3") {
-                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].habEnd0 = 0;
-                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].habEnd1 = 0;
-                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].habEnd2 = 0;
-                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].habEnd3 = 0;
-                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1][stat] = 1;
-            } else if (stat == "hab0Hatches") {
-                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].lvl1Hatches += 1;
-            } else if (stat == "hab0Cargo") {
-                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1].lvl1Cargo += 1;
+                lastMatch.habEnd0 = 0;
+                lastMatch.habEnd1 = 0;
+                lastMatch.habEnd2 = 0;
+                lastMatch.habEnd3 = 0;
+                lastMatch[stat] = 1;
+            } else if (stat == "lvl0Hatches") {
+                lastMatch.lvl1Hatches += 1;
+            } else if (stat == "lvl0Cargo") {
+                lastMatch.lvl1Cargo += 1;
             } else {
-                stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1][stat] += 1;
+                lastMatch[stat] += 1;
             }
             
             if (stat != "teammatesCarried") {
@@ -480,7 +484,7 @@
                 matchy.habEnd0 = 1;
             }
             for (var i = 0; i < variablesReal.length; i++) {
-                stats.find(function(x) {return x.team_number == teamTemp;})[variablesReal[i + 2]] += stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1][variablesReal[i + 2]];
+                stats.find(function(x) {return x.team_number == teamTemp;})[variablesReal[i + 1]] += stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1][variablesReal[i + 1]];
             }
             firstMatch += 1;
             openTab("matches");
