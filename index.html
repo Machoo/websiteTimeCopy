@@ -54,8 +54,6 @@
             <p id="checkImportTBA" style="display: inline-block">Not downloaded</p>
         </div>
         <p></p>
-        API Key: <input type="text" name="aPIKey" id="aPIKeyIn">
-        <p></p>
         <div style="width: 50%; margin: auto">
             <button class="w3-button" onclick="importFB()" id="importFB" style="display: inline-block">Import from Firebase</button>
             <p id="checkImportFB" style="display: inline-block">Not downloaded</p>
@@ -76,7 +74,7 @@
 
     <script>
         var firebaseConfig = {
-            apiKey: "hehe",//document.getElementById("aPIKeyIn").value,
+            apiKey: "",
             authDomain: "scootingapp.firebaseapp.com",
             databaseURL: "https://scootingapp.firebaseio.com",
             projectId: "scootingapp",
