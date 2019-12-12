@@ -28,10 +28,11 @@
             <div class="button scout_button rocket2Cargo" onclick = "scoutButton('lvl2Cargo')" id="lvl2Cargo"></div>
             <div class="button scout_button rocket3Hatch" onclick = "scoutButton('lvl3Hatches')" id="lvl3Hatches"></div>
             <div class="button scout_button rocket3Cargo" onclick = "scoutButton('lvl3Cargo')" id="lvl3Cargo"></div>
+            <div class="w3-button cancelScout_button" onclick = "cancelScout()" id="cancelScoutButton">Cancel Last Action</div>
             <div class="w3-button" onclick = "scoutButton('teammatesCarried')" id="teammatesCarried">+1 Teammates Lifted</div>
             <p id="scoutingLog" style="text-align: right; float: right">Scouted Data:</p>
         </div>
-        <button onclick="startMatch()" id="matchButton">Start Match</button>
+        <button onclick="startMatch()" id="matchButton" style="width: 100%; position: absolute">Start Match</button>
     </div>
 
 
@@ -140,6 +141,8 @@
         var docs = [];
         var docsID = [];
         var stats = [];
+        var lastStat = "lvl1Hatches";
+        var lastMatchTemp = "";
         var teamTemp = 0;
         var matchRow = 0;
         var matchCol = 0;
@@ -427,22 +430,28 @@
 
         function scoutButton(stat) {
             var lastMatch = stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1];
+            lastMatchTemp = lastMatch;
             if (stat == "habStart1" || stat == "habStart2") {
                 lastMatch.habStart1 = 0;
                 lastMatch.habStart2 = 0;
                 lastMatch[stat] = 1;
+                lastStat = stat;
             } else if (stat == "habEnd0" || stat == "habEnd1" || stat == "habEnd2" || stat == "habEnd3") {
                 lastMatch.habEnd0 = 0;
                 lastMatch.habEnd1 = 0;
                 lastMatch.habEnd2 = 0;
                 lastMatch.habEnd3 = 0;
                 lastMatch[stat] = 1;
+                lastStat = stat;
             } else if (stat == "lvl0Hatches") {
                 lastMatch.lvl1Hatches += 1;
+                lastStat = "lvl1Hatches";
             } else if (stat == "lvl0Cargo") {
                 lastMatch.lvl1Cargo += 1;
+                lastStat = "lvl1Cargo";
             } else {
                 lastMatch[stat] += 1;
+                lastStat = stat;
             }
             
             if (stat != "teammatesCarried") {
@@ -486,6 +495,11 @@
             }
             firstMatch += 1;
             openTab("matches");
+        }
+
+        function cancelScout() {
+            lastMatchTemp[lastStat] -= 1;
+            document.getElementById("scoutingLog").innerHTML += "<br>" + lastStat + " cancelled";
         }
 
         function openTab(tab) {
@@ -628,6 +642,11 @@
         left: 383px;
         width: 53px;
         height: 58px;
+    }
+
+    .cancelScout_button {
+        border-color: red;
+        border-style: solid;
     }
 
     @media only screen and (min-width: 1100px) {
