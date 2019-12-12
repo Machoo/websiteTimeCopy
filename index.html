@@ -60,6 +60,8 @@
             <p id="checkImportFB" style="display: inline-block">Not downloaded</p>
         </div>
         <p></p>
+        Password: <input type="text" name="password" id="passwordIn">
+        <p></p>
         <div style="width: 50%; margin: auto">
             <button class="w3-button" onclick="exportFB()" id="exportFB" style="display: inline-block">Export to Firebase</button>
             <p id="checkExportFB" style="display: inline-block">Not uploaded</p>
@@ -208,26 +210,28 @@
         }
 
         function exportFB() {
-            for (var i = 0; i < stats.length; i++) { //iterate through the stats array
-                var teamExists = false;
-                for (var j = 0; j < docs.length; j++) { //iterate through the docs
-                    if (stats[i].team_number == docs[j].team_number) { //check if the team already exists...
-                        for (var k = 0; k < stats[i].matches.length; k++) { //for each match (from stats)...
-                            var matchExists = false;
-                            for (var l = 0; l < docs[j].matches.length - 1; l++) { //for each match (from docs)...
-                                if (stats[i].matches[k] == docs[j].matches[l]) { //if the matches match...
-                                    matchExists = true; //don't add a new one
+            if (document.getElementById("passwordIn").value == "dank") {
+                for (var i = 0; i < stats.length; i++) { //iterate through the stats array
+                    var teamExists = false;
+                    for (var j = 0; j < docs.length; j++) { //iterate through the docs
+                        if (stats[i].team_number == docs[j].team_number) { //check if the team already exists...
+                            for (var k = 0; k < stats[i].matches.length; k++) { //for each match (from stats)...
+                                var matchExists = false;
+                                for (var l = 0; l < docs[j].matches.length - 1; l++) { //for each match (from docs)...
+                                    if (stats[i].matches[k] == docs[j].matches[l]) { //if the matches match...
+                                        matchExists = true; //don't add a new one
+                                    }
+                                }
+                                if (!matchExists) { //otherwise add a new one
+                                    db.collection("teams").doc(docsID[j]).set(stats[i]);
                                 }
                             }
-                            if (!matchExists) { //otherwise add a new one
-                                db.collection("teams").doc(docsID[j]).set(stats[i]);
-                            }
+                            teamExists = true;
                         }
-                        teamExists = true;
                     }
-                }
-                if (!teamExists) {
-                    fbTeams.add(stats[i]);
+                    if (!teamExists) {
+                        fbTeams.add(stats[i]);
+                    }
                 }
             }
 
@@ -244,7 +248,11 @@
             }, 15);
 
             setTimeout(function() {
-                document.getElementById("checkExportFB").innerHTML = "Uploaded";
+                if (document.getElementById("passwordIn").value == "dank") {
+                    document.getElementById("checkExportFB").innerHTML = "Uploaded";
+                } else {
+                    document.getElementById("passwordIn").value = "WRONG";
+                }
             }, 3000);
         }
 
