@@ -16,7 +16,7 @@
     <div id="scouting" class="w3-container tab" style="display:none">
         <div class="scoutCont">
             <img src="https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020Field.PNG" height="540px" onclick="addSpot(event)">
-            <img src="https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020PowerPort.PNG" height="300px" class="powerPortPic">
+            <img src="https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020PowerPort.PNG" height="291px" class="powerPortPic">
             <div class="button scout_button pickup_button" onclick="scoutButton('pickup')" id="pickup">Pickup</div>
             <div class="button scout_button shoot_button" onclick="scoutButton('shoot')" id="shoot">Shooting</div>
             <div class="button scout_button endgam_button" onclick="scoutButton('endgam')" id="endgam">Endgame</div>
@@ -32,7 +32,7 @@
                 <rect class="button powerPortButton low">Lower</rect>
                 <div class="button powerPortButton low" onclick="powerPort('low')" id="low">Lower</div>
             </div>
-            <rect height="540px" width="286.03" class="cover" id="shade"></rect>
+            <rect height="290px" width="286.03" class="cover" id="shade"></rect>
         </div>
         <button onclick="startMatch()" id="matchButton" style="width: 100%; position: absolute; left: 0px">Start Match</button>
     </div>
@@ -444,7 +444,7 @@
             document.getElementById("shade").style.top = "280px";
             document.getElementById("shade").style.left = "1035px";
             document.getElementById("shade").style.width = "229px";
-            document.getElementById("shade").style.height = "300px";
+            document.getElementById("shade").style.height = "291px";
             if (stat == "pickup") {
                 document.getElementById("shoot").className = "button scout_button shoot_button sunk";
                 document.getElementById("endgam").className = "button scout_button endgam_button sunk";
@@ -649,27 +649,27 @@
         top: 280px;
         left: 1035px;
         width: 229px;
-        height: 300px;
+        height: 291px;
     }
 
     .powerPortPic {
         position: absolute;
         top: 280px;
-        right: 16px;
+        left: 1146.5px;
     }
 
     .powerPortButtonsCont {
         position: absolute;
         top: 280px;
         left: 1035px;
-        height: 300px;
+        height: 291px;
         width: 111.5px;
         background-color: rgb(200, 200, 200);
     }
 
     .powerPortButton {
         position: absolute;
-        left: 5.75px;
+        left: 6px;
         height: 40px;
         width: 100px;
         background-color: darkgray;
@@ -682,19 +682,19 @@
     }
 
     .big {
-        top: 68px;
+        top: 68.2px;
     }
 
     .miss {
-        top: 126px;
+        top: 126.4px;
     }
 
     .other {
-        top: 184px;
+        top: 184.6px;
     }
 
     .low {
-        top: 242px;
+        top: 240.8px;
     }
 
     .fadey {
