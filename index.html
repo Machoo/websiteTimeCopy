@@ -15,24 +15,26 @@
 
     <div id="scouting" class="w3-container tab" style="display:none">
         <div class="scoutCont">
-            <img src="https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/frcField2019.jpeg" height="540px">
-            <img src="https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/rocketShip.JPG" height="540px">
-            <div class="button scout_button hab1" onclick = "scoutButton('habStart1')" id="hab1Button"></div>
-            <div class="button scout_button hab2" onclick = "scoutButton('habStart2')" id="hab2Button"></div>
-            <div class="button scout_button hab3" onclick = "scoutButton('habEnd3')" id="habEnd3"></div>
-            <div class="button scout_button cargoshipHatch" onclick = "scoutButton('lvl0Hatches')" id="lvl0Hatches"></div>
-            <div class="button scout_button cargoshipCargo" onclick = "scoutButton('lvl0Cargo')" id="lvl0Cargo"></div>
-            <div class="button scout_button rocket1Hatch" onclick = "scoutButton('lvl1Hatches')" id="lvl1Hatches"></div>
-            <div class="button scout_button rocket1Cargo" onclick = "scoutButton('lvl1Cargo')" id="lvl1Cargo"></div>
-            <div class="button scout_button rocket2Hatch" onclick = "scoutButton('lvl2Hatches')" id="lvl2Hatches"></div>
-            <div class="button scout_button rocket2Cargo" onclick = "scoutButton('lvl2Cargo')" id="lvl2Cargo"></div>
-            <div class="button scout_button rocket3Hatch" onclick = "scoutButton('lvl3Hatches')" id="lvl3Hatches"></div>
-            <div class="button scout_button rocket3Cargo" onclick = "scoutButton('lvl3Cargo')" id="lvl3Cargo"></div>
-            <div class="w3-button cancelScout_button" onclick = "cancelScout()" id="cancelScoutButton">Cancel Last Action</div>
-            <div class="w3-button" onclick = "scoutButton('teammatesCarried')" id="teammatesCarried">+1 Teammates Lifted</div>
-            <p id="scoutingLog" style="text-align: right; float: right">Scouted Data:</p>
+            <img src="https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020Field.PNG" height="540px" onclick="addSpot(event)">
+            <img src="https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020PowerPort.PNG" height="300px" class="powerPortPic">
+            <div class="button scout_button pickup_button" onclick="scoutButton('pickup')" id="pickup">Pickup</div>
+            <div class="button scout_button shoot_button" onclick="scoutButton('shoot')" id="shoot">Shooting</div>
+            <div class="button scout_button endgam_button" onclick="scoutButton('endgam')" id="endgam">Endgame</div>
+            <div class="powerPortButtonsCont">
+                <rect class="button powerPortButton small">Inner</rect>
+                <div class="button powerPortButton small" onclick="powerPort('small')" id="small">Inner</div>
+                <rect class="button powerPortButton big">Outer</rect>
+                <div class="button powerPortButton big" onclick="powerPort('big')" id="big">Outer</div>
+                <rect class="button powerPortButton miss">Miss</rect>
+                <div class="button powerPortButton miss" onclick="powerPort('miss')" id="miss">Miss</div>
+                <rect class="button powerPortButton other">Other</rect>
+                <div class="button powerPortButton other" onclick="powerPort('other')" id="other">Other</div>
+                <rect class="button powerPortButton low">Lower</rect>
+                <div class="button powerPortButton low" onclick="powerPort('low')" id="low">Lower</div>
+            </div>
+            <rect height="540px" width="286.03" class="cover" id="shade"></rect>
         </div>
-        <button onclick="startMatch()" id="matchButton" style="width: 100%; position: absolute">Start Match</button>
+        <button onclick="startMatch()" id="matchButton" style="width: 100%; position: absolute; left: 0px">Start Match</button>
     </div>
 
 
@@ -151,7 +153,7 @@
         var firstMatch = 0;
         var variables = ["Num", "Lvl 1<br>Hatches", "Lvl 1<br>Cargo", "Lvl 2<br>Hatches", "Lvl 2<br>Cargo", "Lvl 3<br>Hatches", "Lvl 3<br>Cargo", "Hab<br>Start 1", "Hab<br>Start 2", "Hab<br>End 0", "Hab<br>End 1", "Hab<br>End 2", "Hab<br>End 3", "Teammates<br>Carried"];
         var variablesReal = ["team_number", "lvl1Hatches", "lvl1Cargo", "lvl2Hatches", "lvl2Cargo", "lvl3Hatches", "lvl3Cargo", "habStart1", "habStart2", "habEnd0", "habEnd1", "habEnd2", "habEnd3", "teammatesCarried"];
-        openTab('sync');
+        openTab('scouting');
 
         function importFB() {
             fbTeams.get().then(function(querySnapshot) {
@@ -414,10 +416,10 @@
             teamTemp = teamNum;
             matchRow = teamRow;
             matchCol = teamCol;
-            document.getElementById("hab1Button").setAttribute("onclick", "scoutButton('habStart1')");
+            /*document.getElementById("hab1Button").setAttribute("onclick", "scoutButton('habStart1')");
             document.getElementById("hab2Button").setAttribute("onclick", "scoutButton('habStart2')");
             document.getElementById("matchButton").setAttribute("onclick", "startMatch()");
-            document.getElementById("matchButton").innerHTML = "Start Match";
+            document.getElementById("matchButton").innerHTML = "Start Match";*/
             stats.find(function(x) {return x.team_number == teamTemp;}).matches.push({
                 "lvl1Hatches": 0,
                 "lvl1Cargo": 0,
@@ -432,65 +434,80 @@
                 "habEnd2": 0,
                 "habEnd3": 0,
                 "teammatesCarried": 0});
-            document.getElementById("scoutingLog").innerHTML = "Scouted Data:";
+            //document.getElementById("scoutingLog").innerHTML = "Scouted Data:";
             openTab('scouting');
         }
 
+        var buttonType = "pickup";
+        var shooting = false;
         function scoutButton(stat) {
-            var lastMatch = stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1];
-            lastMatchTemp = lastMatch;
-            if (stat == "habStart1" || stat == "habStart2") {
-                lastMatch.habStart1 = 0;
-                lastMatch.habStart2 = 0;
-                lastMatch[stat] = 1;
-                lastStat = stat;
-            } else if (stat == "habEnd0" || stat == "habEnd1" || stat == "habEnd2" || stat == "habEnd3") {
-                lastMatch.habEnd0 = 0;
-                lastMatch.habEnd1 = 0;
-                lastMatch.habEnd2 = 0;
-                lastMatch.habEnd3 = 0;
-                lastMatch[stat] = 1;
-                lastStat = stat;
-            } else if (stat == "lvl0Hatches") {
-                lastMatch.lvl1Hatches += 1;
-                lastStat = "lvl1Hatches";
-            } else if (stat == "lvl0Cargo") {
-                lastMatch.lvl1Cargo += 1;
-                lastStat = "lvl1Cargo";
-            } else {
-                lastMatch[stat] += 1;
-                lastStat = stat;
-            }
-            
-            if (stat != "teammatesCarried") {
-                var butt = document.getElementById("hab1Button");
-                if (stat == "habStart1" || stat == "habEnd1") {
-                    butt = document.getElementById("hab1Button");
-                } else if (stat == "habStart2" || stat == "habEnd2") {
-                    butt = document.getElementById("hab2Button");
-                } else {
-                    butt = document.getElementById(stat);
+            document.getElementById("shade").style.top = "280px";
+            document.getElementById("shade").style.left = "1035px";
+            document.getElementById("shade").style.width = "229px";
+            document.getElementById("shade").style.height = "300px";
+            if (stat == "pickup") {
+                document.getElementById("shoot").className = "button scout_button shoot_button sunk";
+                document.getElementById("endgam").className = "button scout_button endgam_button sunk";
+                document.getElementById("pickup").className = "button scout_button pickup_button raised";
+                document.getElementById("shoot").innerHTML = "Shooting";
+                var kiddos = document.getElementById("scouting").childNodes;
+                for (var i = 0; i < spotNum - 1; i++) {
+                    document.getElementById("scouting").removeChild(kiddos[kiddos.length - 1]);
                 }
-                butt.setAttribute("style", "background-color: rgb(0, 255, 0);");
-                var fadeEffect = setInterval(function () {
-                    if (!butt.style.opacity) {
-                        butt.style.opacity = 1;
-                    }
-                    if (butt.style.opacity > 0) {
-                        butt.style.opacity -= 0.005;
-                    } else {
-                        clearInterval(fadeEffect);
-                    }
-                }, 10);
+                spotNum = 1;
+            } else if (stat == "shoot") {
+                document.getElementById("pickup").className = "button scout_button pickup_button sunk";
+                document.getElementById("endgam").className = "button scout_button endgam_button sunk";
+                document.getElementById("shoot").className = "button scout_button shoot_button raised";
+                document.getElementById("shoot").innerHTML = "Shooting<br>Select location!";
+                shooting = true;
+            } else {
+                document.getElementById("pickup").className = "button scout_button pickup_button sunk";
+                document.getElementById("shoot").className = "button scout_button shoot_button sunk";
+                document.getElementById("endgam").className = "button scout_button endgam_button raised";
+                document.getElementById("shoot").innerHTML = "Shooting";
             }
-            document.getElementById("scoutingLog").innerHTML += "<br>" + stat;
+            buttonType = stat;
         }
+        scoutButton("pickup");
 
+        var spotNum2 = 0;
+        function powerPort(stat) {
+            var butt = document.getElementById(stat);
+            spotNum2 -= 1;
+            document.getElementById("shoot").innerHTML = "Shooting<br>" + (spotNum2) + " left";
+            payload.events.push({
+                "type": "shoot",
+                "x": x,
+                "y": y,
+                "timestamp": time,
+                "result": stat
+            })
+            butt.setAttribute("style", "background-color: rgb(0, 255, 0);");
+            var fadeEffect = setInterval(function () {
+                if (!butt.style.opacity) {
+                    butt.style.opacity = 1;
+                }
+                if (butt.style.opacity > 0) {
+                    butt.style.opacity -= 0.005;
+                } else {
+                    clearInterval(fadeEffect);
+                }
+            }, 10);
+        }
+        var time = 0;
         function startMatch() {
-            document.getElementById("hab1Button").setAttribute("onclick", "scoutButton('habEnd1')");
-            document.getElementById("hab2Button").setAttribute("onclick", "scoutButton('habEnd2')");
             document.getElementById("matchButton").setAttribute("onclick", "endMatch()");
-            document.getElementById("matchButton").innerHTML = "Submit Match";
+            document.getElementById("matchButton").innerHTML = "0.0";
+            var countTime = setInterval(function () {
+                if (time <= 150) {
+                    time += 0.1;
+                    document.getElementById("matchButton").innerHTML = time.toFixed(1);
+                } else {
+                    clearInterval(countTime);
+                    document.getElementById("matchButton").innerHTML = "Submit Match";
+                }
+            }, 100);
         }
 
         function endMatch() {
@@ -525,6 +542,61 @@
                 document.getElementById("infoTab").innerHTML = teamTemp;
             }
             document.getElementById(tab).style.display = "block";
+        }
+        
+        var spotNum = 1;
+        var payload = {
+            "match": 4,
+            "team": 6800,
+            "alliance": "blue",
+            "start_position_x": 60,
+            "start_position_y": 200,
+            "events": [],
+            "endgame": {
+                "attempt": true,
+                "timestamp": 254,
+                "level": true,
+                "success": true,
+                "buddy": false
+            }
+        };
+        var x = 0;
+        var y = 0;
+        function addSpot(event) {
+            var spoot = document.createElement('div');
+            spoot.setAttribute("class", "spot");
+            spoot.style.left = (event.clientX - 12.5) + "px"
+            spoot.style.top = (event.clientY - 12.5) + "px";
+            spoot.style.width = "25px";
+            spoot.style.height = "25px";
+            spoot.style.backgroundColor = "rgb(255, 255, 0)";
+            spoot.innerHTML = spotNum;
+            if (buttonType == "shoot") {
+                spoot.style.backgroundColor = "rgb(0, 255, 0)";
+                spoot.innerHTML = "S";
+            }
+            spotNum += 1;
+            document.getElementById("scouting").appendChild(spoot);
+            if (buttonType == "shoot" && shooting) {
+                document.getElementById("shade").style.top = "30px";
+                document.getElementById("shade").style.left = "15px";
+                document.getElementById("shade").style.width = "1020px";
+                document.getElementById("shade").style.height = "542px";
+                document.getElementById("shoot").innerHTML = "Shooting<br>" + (spotNum - 2) + " left";
+                spotNum2 = spotNum - 2;
+            }
+            x = event.clientX - 12.5;
+            y = event.clientY - 12.5;
+            if (buttonType == "pickup") {
+                payload.events.push({
+                    "type": buttonType,
+                    "x": x,
+                    "y": y,
+                    "timestamp": time,
+                    "result": "na"
+                });
+            }
+            console.log(payload.events);
         }
     </script>
 </html>
@@ -570,91 +642,111 @@
         margin: auto;
     }
 
+    .cover {
+        position: absolute;
+        background-color: rgb(0, 0, 0);
+        opacity: 0.5;
+        top: 280px;
+        left: 1035px;
+        width: 229px;
+        height: 300px;
+    }
+
+    .powerPortPic {
+        position: absolute;
+        top: 280px;
+        right: 16px;
+    }
+
+    .powerPortButtonsCont {
+        position: absolute;
+        top: 280px;
+        right: 133.48px;
+        height: 300px;
+        width: 111.52px;
+        background-color: rgb(200, 200, 200);
+    }
+
+    .powerPortButton {
+        position: absolute;
+        left: 5.76px;
+        height: 40px;
+        width: 100px;
+        background-color: darkgray;
+        text-align: center;
+        user-select: none;
+    }
+
+    .small {
+        top: 10px;
+    }
+
+    .big {
+        top: 68px;
+    }
+
+    .miss {
+        top: 126px;
+    }
+
+    .other {
+        top: 184px;
+    }
+
+    .low {
+        top: 242px;
+    }
+
+    .fadey {
+        background-color: rgba(0, 255, 0, 0);
+    }
+
     .scout_button {
         position: absolute;
-        background-color: rgba(0, 0, 0, 0);
+        background-color: darkgray;
+        user-select: none;
     }
 
-    .hab1 {
-        top: 115px;
-        left: 162px;
-        width: 124px;
-        height: 78px;
+    .pickup_button {
+        right: 25.5px;
+        top: 40px;
+        width: 210px;
+        height: 60px;
+        text-align: center;
     }
 
-    .hab2 {
-        top: 37px;
-        left: 181px;
-        width: 66px;
-        height: 78px;
+    .shoot_button {
+        right: 25.5px;
+        top: 120px;
+        width: 210px;
+        height: 60px;
+        text-align: center;
     }
 
-    .hab3 {
-        top: 37px;
-        left: 247px;
-        width: 39px;
-        height: 78px;
+    .endgam_button {
+        right: 25.5px;
+        top: 200px;
+        width: 210px;
+        height: 60px;
+        text-align: center;
     }
 
-    .cargoshipHatch {
-        top: 450px;
-        left: 210px;
-        width: 35px;
-        height: 106px;
+    .spot {
+        position: absolute;
+        background-color: rgb(255, 255, 0);
+        width: 25px;
+        height: 25px;
+        border-radius: 12.5px;
+        text-align: center;
+        user-select: none;
     }
 
-    .cargoshipCargo {
-        top: 450px;
-        left: 245px;
-        width: 41px;
-        height: 106px;
+    .raised {
+        background-color: rgb(230, 230, 230);
     }
 
-    .rocket1Hatch {
-        top: 422px;
-        left: 437px;
-        width: 70px;
-        height: 70px;
-    }
-
-    .rocket1Cargo {
-        top: 395px;
-        left: 383px;
-        width: 53px;
-        height: 58px;
-    }
-
-    .rocket2Hatch {
-        top: 323px;
-        left: 437px;
-        width: 70px;
-        height: 70px;
-    }
-
-    .rocket2Cargo {
-        top: 296px;
-        left: 383px;
-        width: 53px;
-        height: 58px;
-    }
-
-    .rocket3Hatch {
-        top: 224px;
-        left: 437px;
-        width: 70px;
-        height: 70px;
-    }
-
-    .rocket3Cargo {
-        top: 197px;
-        left: 383px;
-        width: 53px;
-        height: 58px;
-    }
-
-    .cancelScout_button {
-        border-color: red;
-        border-style: solid;
+    .sunk {
+        background-color: darkgray;
     }
 
     @media only screen and (min-width: 1100px) {
