@@ -32,6 +32,17 @@
                 <rect class="button powerPortButton low">Lower</rect>
                 <div class="button powerPortButton low" onclick="powerPort('low')" id="low">Lower</div>
             </div>
+            <div class="powerPortButtonsCont hide" id="endgameButtonCont">
+                <p>Attmpted:<br><br>Level:<br><br>Successful:<br><br>Host:</p>
+                <div class="button endgameButton check" style="top: 25px; box-shadow: 1px 1px black;" onclick="scoutButton('attempt_true')" id="attempt_true">&#x2713;</div>
+                <div class="button endgameButton ex" style="top: 25px; box-shadow: 1px 1px black;" onclick="scoutButton('attempt_false')" id="attempt_false">X</div>
+                <div class="button endgameButton check" style="top: 94px; box-shadow: 1px 1px black;" onclick="scoutButton('level_true')" id="level_true">&#x2713;</div>
+                <div class="button endgameButton ex" style="top: 94px; box-shadow: 1px 1px black;" onclick="scoutButton('level_false')" id="level_false">X</div>
+                <div class="button endgameButton check" style="top: 163px; box-shadow: 1px 1px black;" onclick="scoutButton('success_true')" id="success_true">&#x2713;</div>
+                <div class="button endgameButton ex" style="top: 163px; box-shadow: 1px 1px black;" onclick="scoutButton('success_false')" id="success_false">X</div>
+                <div class="button endgameButton check" style="top: 232px; box-shadow: 1px 1px black;" onclick="scoutButton('buddy_true')" id="buddy_true">&#x2713;</div>
+                <div class="button endgameButton ex" style="top: 232px; box-shadow: 1px 1px black;" onclick="scoutButton('buddy_false')" id="buddy_false">X</div>
+            </div>
             <rect height="290px" width="286.03" class="cover" id="shade"></rect>
         </div>
         <button onclick="startMatch()" id="matchButton" style="width: 100%; position: absolute; left: 0px">Start Match</button>
@@ -441,10 +452,6 @@
         var buttonType = "pickup";
         var shooting = false;
         function scoutButton(stat) {
-            document.getElementById("shade").style.top = "280px";
-            document.getElementById("shade").style.left = "1035px";
-            document.getElementById("shade").style.width = "229px";
-            document.getElementById("shade").style.height = "291px";
             if (stat == "pickup") {
                 document.getElementById("shoot").className = "button scout_button shoot_button sunk";
                 document.getElementById("endgam").className = "button scout_button endgam_button sunk";
@@ -455,18 +462,42 @@
                     document.getElementById("scouting").removeChild(kiddos[kiddos.length - 1]);
                 }
                 spotNum = 1;
+                document.getElementById("shade").style.top = "280px";
+                document.getElementById("shade").style.left = "1035px";
+                document.getElementById("shade").style.width = "229px";
+                document.getElementById("shade").style.height = "291px";
+                buttonType = stat;
             } else if (stat == "shoot") {
                 document.getElementById("pickup").className = "button scout_button pickup_button sunk";
                 document.getElementById("endgam").className = "button scout_button endgam_button sunk";
                 document.getElementById("shoot").className = "button scout_button shoot_button raised";
                 shooting = true;
-            } else {
+                document.getElementById("shade").style.top = "280px";
+                document.getElementById("shade").style.left = "1035px";
+                document.getElementById("shade").style.width = "229px";
+                document.getElementById("shade").style.height = "291px";
+                buttonType = stat;
+            } else if (stat == "endgam") {
                 document.getElementById("pickup").className = "button scout_button pickup_button sunk";
                 document.getElementById("shoot").className = "button scout_button shoot_button sunk";
                 document.getElementById("endgam").className = "button scout_button endgam_button raised";
                 document.getElementById("shoot").innerHTML = "Shooting";
+                document.getElementById("endgameButtonCont").style.display = "block";
+                document.getElementById("shade").style.top = "30px";
+                document.getElementById("shade").style.left = "15px";
+                document.getElementById("shade").style.width = "1020px";
+                document.getElementById("shade").style.height = "542px";
+                payload.endgame.timestamp = parseInt(time.toString());
+                buttonType = stat;
+            } else if (stat.charAt(stat.length - 2) == 'u') {
+                document.getElementById(stat.substring(0, stat.length - 5) + "_false").style.boxShadow = "1px 1px black";
+                document.getElementById(stat).style.boxShadow = "-1px -1px black";
+                payload.endgame[stat.substring(0, stat.length - 5)] = true;
+            } else {
+                document.getElementById(stat.substring(0, stat.length - 6) + "_true").style.boxShadow = "1px 1px black";
+                document.getElementById(stat).style.boxShadow = "-1px -1px black";
+                payload.endgame[stat.substring(0, stat.length - 6)] = false;
             }
-            buttonType = stat;
         }
         scoutButton("pickup");
 
@@ -479,7 +510,7 @@
                 "type": "shoot",
                 "x": x,
                 "y": y,
-                "timestamp": time,
+                "timestamp": parseInt(time.toString()),
                 "result": stat
             })
             butt.setAttribute("style", "background-color: rgb(0, 255, 0);");
@@ -584,19 +615,19 @@
                 document.getElementById("shoot").innerHTML = (spotNum - 2) + " left";
                 spotNum2 = spotNum - 2;
             }
-            x = event.clientX - 12.5;
-            y = event.clientY - 12.5;
+            x = parseInt((255 * (event.clientX - 12.5) / 1025).toString());
+            y = parseInt((254 * (540 - (event.clientY - 30)) / 540).toString());
             if (buttonType == "pickup") {
                 payload.events.push({
                     "type": buttonType,
                     "x": x,
                     "y": y,
-                    "timestamp": time,
+                    "timestamp": parseInt(time.toString()),
                     "result": "na"
                 });
             }
-            console.log(payload.events);
-        }//right: 133.48px;
+            console.log(payload);
+        }
     </script>
 </html>
 
@@ -666,6 +697,12 @@
         background-color: rgb(200, 200, 200);
     }
 
+    .hide {
+        display: none;
+        width: 229px;
+        font-size: 23px;
+    }
+
     .powerPortButton {
         position: absolute;
         left: 6px;
@@ -722,6 +759,24 @@
 
     .endgam_button {
         top: 200px;
+    }
+
+    .endgameButton {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        text-align: center;
+        user-select: none;
+    }
+
+    .check {
+        left: 130px;
+        background-color: rgb(0, 255, 0);
+    }
+
+    .ex {
+        left: 190px;
+        background-color: rgb(255, 0, 0);
     }
 
     .spot {
