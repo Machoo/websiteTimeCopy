@@ -511,13 +511,42 @@
             var butt = document.getElementById(stat);
             spotNum2 -= 1;
             document.getElementById("shoot").innerHTML = (spotNum2) + " left";
-            payload.events.push({
-                "type": "shoot",
+            if (stat == "small") {
+                payload.events.push({
+                "type": 1,
                 "x": x,
                 "y": y,
                 "timestamp": parseInt(time.toString()),
-                "result": stat
-            });
+                "result": 0
+            });} else if (stat == "big") {
+                payload.events.push({
+                "type": 1,
+                "x": x,
+                "y": y,
+                "timestamp": parseInt(time.toString()),
+                "result": 1
+            });} else if (stat == "miss") {
+                payload.events.push({
+                "type": 1,
+                "x": x,
+                "y": y,
+                "timestamp": parseInt(time.toString()),
+                "result": 3
+            });} else if (stat == "low") {
+                payload.events.push({
+                "type": 1,
+                "x": x,
+                "y": y,
+                "timestamp": parseInt(time.toString()),
+                "result": 2
+            });} else if (stat == "clear") {
+                payload.events.push({
+                "type": 1,
+                "x": x,
+                "y": y,
+                "timestamp": parseInt(time.toString()),
+                "result": 4
+            });}
             if (spotNum2 == 0) {
                 scoutButton("pickup");
             }
@@ -550,15 +579,66 @@
         }
 
         function endMatch() {
-            var matchy = stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1];
-            if (matchy.habEnd1 == 0 && matchy.habEnd2 == 0 && matchy.habEnd3 == 0) {
-                matchy.habEnd0 = 1;
+            var dater = JSON.stringify(payload);
+            console.log(dater);
+            var dater2 = simplify(payload);
+            console.log(dater2);
+            console.log("time:    " + (dater2[0] & 0xFF));
+            console.log("buddy:   " + ((dater2[0] & 0x100) >> 8));
+            console.log("success: " + ((dater2[0] & 0x200) >> 9));
+            console.log("level:   " + ((dater2[0] & 0x400) >> 10));
+            console.log("attempt: " + ((dater2[0] & 0x800) >> 11));
+            console.log("team:    " + ((dater2[0] & 0xFFFF0000) >> 16));
+
+            console.log("numEvents: " + (dater2[1] & 0x7));
+            console.log("alliance:  " + ((dater2[1] & 0x80) >> 7));
+            console.log("start_y:   " + ((dater2[1] & 0xFF00) >> 8));
+            console.log("start_x:   " + ((dater2[1] & 0xFF0000) >> 16));
+            console.log("matchNum:  " + ((dater2[1] & 0xFF000000) >> 24));
+
+            console.log("eventTime:   " + (dater2[2] & 0xFF));
+            console.log("eventY:      " + ((dater2[2] & 0xFF00) >> 8));
+            console.log("eventX:      " + ((dater2[2] & 0xFF0000) >> 16));
+            console.log("eventResult: " + ((dater2[2] & 0x7000000 >> 24)));
+            console.log("eventType:   " + ((dater2[2] & 0x8000000) >> 27));
+            var qrCode = document.createElement("img");
+            qrCode.src = "https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=" + dater2 + "&chld=L|1&choe=UTF-8";
+            qrCode.style.height = "90%";
+            qrCode.style.position = "absolute";
+            qrCode.style.margin = "auto";
+            qrCode.style.top = "32px";
+            qrCode.style.left = "16px";
+            scouting.appendChild(qrCode);
+        }
+
+        function simplify(s) {
+            var out = [];
+            var A = s.endgame.timestamp & 0xFF;
+            A = A | ((s.endgame.buddy & 0x1) << 8);
+            A = A | ((s.endgame.success & 0x1) << 9);
+            A = A | ((s.endgame.level & 0x1) << 10);
+            A = A | ((s.endgame.attempt & 0x1) << 11);
+            A = A | ((s.team & 0xFFFF) << 16);
+            out.push(A);
+            var B = s.events.length & 0x7;
+            if (s.alliance == "red") {
+                B = B | (0 << 7);
+            } else {
+                B = B | (1 << 7);
             }
-            for (var i = 0; i < variablesReal.length; i++) {
-                stats.find(function(x) {return x.team_number == teamTemp;})[variablesReal[i + 1]] += stats.find(function(x) {return x.team_number == teamTemp;}).matches[stats.find(function(x) {return x.team_number == teamTemp;}).matches.length - 1][variablesReal[i + 1]];
+            B = B | ((s.start_position_y & 0xFF) << 8);
+            B = B | ((s.start_position_x & 0xFF) << 16);
+            B = B | ((s.match & 0xFF) << 24);
+            out.push(B);
+            for (var i = 0; i < s.events.length; i++) {
+                var P = s.events[i].timestamp & 0xFF;
+                P = P | ((s.events[i].y & 0xFF) << 8);
+                P = P | ((s.events[i].x & 0xFF) << 16);
+                P = P | ((s.events[i].result & 0xFF) << 24);
+                P = P | ((s.events[i].type & 0xFF) << 27);
+                out.push(P);
             }
-            firstMatch += 1;
-            openTab("matches");
+            return out;
         }
 
         function cancelScout() {
@@ -585,26 +665,28 @@
         }
         
         function changeColor(color) {
-            if (color == "blue") {
+            if (payload.alliance == "blue") {
                 document.getElementById("field").src = "https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020Field.PNG";
+                payload.alliance = "red";
             } else {
                 document.getElementById("field").src = "https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020FieldFlipped.png";
+                payload.alliance = "blue";
             }
         }
 
         var spotNum = 1;
         var payload = {
-            "match": 4,
+            "match": 107,
             "team": 6800,
             "alliance": "blue",
             "start_position_x": 0,
             "start_position_y": 0,
             "events": [],
             "endgame": {
-                "attempt": true,
-                "timestamp": 254,
-                "level": true,
-                "success": true,
+                "timestamp": 0,
+                "attempt": false,
+                "level": false,
+                "success": false,
                 "buddy": false
             }
         };
@@ -631,7 +713,7 @@
                 document.getElementById("scouting").appendChild(a);
             }
             spotNum += 1;
-            console.log(buttonType);
+            //console.log(buttonType);
             document.getElementById("scouting").appendChild(spoot);
             if (buttonType == "shoot" && shooting) {
                 document.getElementById("shade").style.top = "30px";
@@ -649,14 +731,14 @@
                 scoutButton("pickup");
             } else if (buttonType == "pickup") {
                 payload.events.push({
-                    "type": buttonType,
+                    "type": 0,
                     "x": x,
                     "y": y,
                     "timestamp": parseInt(time.toString()),
-                    "result": "na"
+                    "result": 5
                 });
             }
-            console.log(payload);
+            //console.log(payload);
         }
     </script>
 </html>
