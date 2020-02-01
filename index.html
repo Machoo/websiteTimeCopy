@@ -15,7 +15,7 @@
 
     <div id="scouting" class="w3-container tab" style="display:none">
         <div class="scoutCont">
-            <img src="https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020Field.PNG" height="540px" onclick="addSpot(event)">
+            <img src="https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020FieldFlipped.png" height="540px" onclick="addSpot(event)" id="field">
             <img src="https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020PowerPort.PNG" height="291px" class="powerPortPic">
             <div class="button scout_button pickup_button" onclick="scoutButton('pickup')" id="pickup">Pickup</div>
             <div class="button scout_button shoot_button" onclick="scoutButton('shoot')" id="shoot">Shooting</div>
@@ -78,6 +78,12 @@
         <div style="width: 50%; margin: auto">
             <button class="w3-button" onclick="exportFB()" id="exportFB" style="display: inline-block">Export to Firebase</button>
             <p id="checkExportFB" style="display: inline-block">Not uploaded</p>
+        </div>
+        <p></p>
+        <p></p>
+        <div style="width: 50%; margin: auto">
+            <button class="w3-button" onclick="changeColor('blue')" style="display: inline-block; background-color: rgb(0, 0, 255); color: rgb(255, 255, 255)">Blue</button>
+            <button class="w3-button" onclick="changeColor('red')" style="display: inline-block; background-color: rgb(255, 0, 0); color: rgb(0, 0, 0)">Red</button>
         </div>
     </div>
 
@@ -431,7 +437,7 @@
             document.getElementById("hab2Button").setAttribute("onclick", "scoutButton('habStart2')");
             document.getElementById("matchButton").setAttribute("onclick", "startMatch()");
             document.getElementById("matchButton").innerHTML = "Start Match";*/
-            stats.find(function(x) {return x.team_number == teamTemp;}).matches.push({
+            /*stats.find(function(x) {return x.team_number == teamTemp;}).matches.push({
                 "lvl1Hatches": 0,
                 "lvl1Cargo": 0,
                 "lvl2Hatches": 0,
@@ -444,12 +450,12 @@
                 "habEnd1": 0,
                 "habEnd2": 0,
                 "habEnd3": 0,
-                "teammatesCarried": 0});
+                "teammatesCarried": 0});*/
             //document.getElementById("scoutingLog").innerHTML = "Scouted Data:";
             openTab('scouting');
         }
 
-        var buttonType = "pickup";
+        var buttonType = "start";
         var shooting = false;
         function scoutButton(stat) {
             if (stat == "pickup") {
@@ -499,7 +505,6 @@
                 payload.endgame[stat.substring(0, stat.length - 6)] = false;
             }
         }
-        scoutButton("pickup");
 
         var spotNum2 = 0;
         function powerPort(stat) {
@@ -566,7 +571,8 @@
                 showTeamsList();
             }
             if (tab == 'matches') {
-                showMatchList();
+                //showMatchList();
+                scoutTeam(6800, 0, 0);
             }
             if (tab == 'scouting') {
                 document.getElementById("infoTab").innerHTML = teamTemp;
@@ -574,13 +580,21 @@
             document.getElementById(tab).style.display = "block";
         }
         
+        function changeColor(color) {
+            if (color == "blue") {
+                document.getElementById("field").src = "https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020Field.PNG";
+            } else {
+                document.getElementById("field").src = "https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020FieldFlipped.png";
+            }
+        }
+
         var spotNum = 1;
         var payload = {
             "match": 4,
             "team": 6800,
             "alliance": "blue",
-            "start_position_x": 60,
-            "start_position_y": 200,
+            "start_position_x": 0,
+            "start_position_y": 0,
             "events": [],
             "endgame": {
                 "attempt": true,
@@ -593,6 +607,7 @@
         var x = 0;
         var y = 0;
         function addSpot(event) {
+            console.log(buttonType);
             var spoot = document.createElement('div');
             spoot.setAttribute("class", "spot");
             spoot.style.left = (event.clientX - 12.5) + "px"
@@ -617,7 +632,11 @@
             }
             x = parseInt((255 * (event.clientX - 12.5) / 1025).toString());
             y = parseInt((254 * (540 - (event.clientY - 30)) / 540).toString());
-            if (buttonType == "pickup") {
+            if (buttonType == "start") {
+                payload.start_position_x = x;
+                payload.start_position_y = y;
+                scoutButton("pickup");
+            } else if (buttonType == "pickup") {
                 payload.events.push({
                     "type": buttonType,
                     "x": x,
