@@ -3,9 +3,9 @@
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 
     <div class="w3-row w3-light-grey w3-border-bottom w3-border-black tabBar">
-        <button class="w3-row-item w3-button" onclick="openTab('matches')">Matches</button>
+        <button class="w3-row-item w3-button" onclick="openTab('matches')">Matches</button><!--
         <button class="w3-row-item w3-button" onclick="openTab('teams')">Teams</button>
-        <button class="w3-row-item w3-button" onclick="openTab('info')" id="infoTab">Info</button>
+        <button class="w3-row-item w3-button" onclick="openTab('info')" id="infoTab">Info</button>-->
         <button class="w3-row-item w3-button" onclick="openTab('sync')">Sync</button>
     </div>
 
@@ -33,15 +33,15 @@
                 <div class="button powerPortButton low" onclick="powerPort('low')" id="low">Lower</div>
             </div>
             <div class="powerPortButtonsCont hide" id="endgameButtonCont">
-                <p>Attmpted:<br><br>Level:<br><br>Successful:<br><br>Host:</p>
-                <div class="button endgameButton check" style="top: 25px; box-shadow: 1px 1px black;" onclick="scoutButton('attempt_true')" id="attempt_true">&#x2713;</div>
-                <div class="button endgameButton ex" style="top: 25px; box-shadow: 1px 1px black;" onclick="scoutButton('attempt_false')" id="attempt_false">X</div>
-                <div class="button endgameButton check" style="top: 94px; box-shadow: 1px 1px black;" onclick="scoutButton('level_true')" id="level_true">&#x2713;</div>
-                <div class="button endgameButton ex" style="top: 94px; box-shadow: 1px 1px black;" onclick="scoutButton('level_false')" id="level_false">X</div>
-                <div class="button endgameButton check" style="top: 163px; box-shadow: 1px 1px black;" onclick="scoutButton('success_true')" id="success_true">&#x2713;</div>
-                <div class="button endgameButton ex" style="top: 163px; box-shadow: 1px 1px black;" onclick="scoutButton('success_false')" id="success_false">X</div>
-                <div class="button endgameButton check" style="top: 232px; box-shadow: 1px 1px black;" onclick="scoutButton('buddy_true')" id="buddy_true">&#x2713;</div>
-                <div class="button endgameButton ex" style="top: 232px; box-shadow: 1px 1px black;" onclick="scoutButton('buddy_false')" id="buddy_false">X</div>
+                <p>Attmpted:<br><br>Successful:<br><br>Level:<br><br>Host:</p>
+                <div class="button endgameButton check" style="top: 25px; box-shadow: 2px 2px black;" onclick="scoutButton('attempt_true')" id="attempt_true">&#x2713;</div>
+                <div class="button endgameButton ex" style="top: 25px; box-shadow: 2px 2px black;" onclick="scoutButton('attempt_false')" id="attempt_false">X</div>
+                <div class="button endgameButton check" style="top: 163px; box-shadow: 2px 2px black;" onclick="scoutButton('success_true')" id="success_true">&#x2713;</div>
+                <div class="button endgameButton ex" style="top: 163px; box-shadow: 2px 2px black;" onclick="scoutButton('success_false')" id="success_false">X</div>
+                <div class="button endgameButton check" style="top: 94px; box-shadow: 2px 2px black;" onclick="scoutButton('level_true')" id="level_true">&#x2713;</div>
+                <div class="button endgameButton ex" style="top: 94px; box-shadow: 2px 2px black;" onclick="scoutButton('level_false')" id="level_false">X</div>
+                <div class="button endgameButton check" style="top: 232px; box-shadow: 2px 2px black;" onclick="scoutButton('buddy_true')" id="buddy_true">&#x2713;</div>
+                <div class="button endgameButton ex" style="top: 232px; box-shadow: 2px 2px black;" onclick="scoutButton('buddy_false')" id="buddy_false">X</div>
             </div>
             <rect height="290px" width="286.03" class="cover" id="shade"></rect>
         </div>
@@ -98,7 +98,7 @@
         var firebaseConfig = {
             apiKey: "",
             authDomain: "scootingapp.firebaseapp.com",
-            databaseURL: "https://scootingapp.firebaseio.com",
+            databaseURL: "https://scootingapp.firebaseio.com", //instead of scootingapp, viperbotsvalor
             projectId: "scootingapp",
             storageBucket: "scootingapp.appspot.com",
             messagingSenderId: "557439690320",
@@ -109,6 +109,7 @@
         firebase.analytics();
         var db = firebase.firestore();
         fbTeams = db.collection("teams"); //this has all initialized the Firebase connection
+        //2019txaus
         
         var rawMatchImport = [];
         function importTBA() {
@@ -170,7 +171,7 @@
         var firstMatch = 0;
         var variables = ["Num", "Lvl 1<br>Hatches", "Lvl 1<br>Cargo", "Lvl 2<br>Hatches", "Lvl 2<br>Cargo", "Lvl 3<br>Hatches", "Lvl 3<br>Cargo", "Hab<br>Start 1", "Hab<br>Start 2", "Hab<br>End 0", "Hab<br>End 1", "Hab<br>End 2", "Hab<br>End 3", "Teammates<br>Carried"];
         var variablesReal = ["team_number", "lvl1Hatches", "lvl1Cargo", "lvl2Hatches", "lvl2Cargo", "lvl3Hatches", "lvl3Cargo", "habStart1", "habStart2", "habEnd0", "habEnd1", "habEnd2", "habEnd3", "teammatesCarried"];
-        openTab('scouting');
+        openTab('sync');
 
         function importFB() {
             fbTeams.get().then(function(querySnapshot) {
@@ -287,7 +288,7 @@
                 table_variable.setAttribute('onclick', 'sortTeams(variablesReal[' + i + '], ' + i + ')');
                 table_variable.innerHTML = variables[i];
                 document.getElementById('teamsListContainer').appendChild(table_variable);
-            } //fix hatches / cargo lvl 1 not updating
+            }
 
             for (var i = 0; i < stats.length; i++) {
                 var team = document.createElement('tr');
@@ -433,41 +434,31 @@
             teamTemp = teamNum;
             matchRow = teamRow;
             matchCol = teamCol;
-            /*document.getElementById("hab1Button").setAttribute("onclick", "scoutButton('habStart1')");
-            document.getElementById("hab2Button").setAttribute("onclick", "scoutButton('habStart2')");
-            document.getElementById("matchButton").setAttribute("onclick", "startMatch()");
-            document.getElementById("matchButton").innerHTML = "Start Match";*/
-            /*stats.find(function(x) {return x.team_number == teamTemp;}).matches.push({
-                "lvl1Hatches": 0,
-                "lvl1Cargo": 0,
-                "lvl2Hatches": 0,
-                "lvl2Cargo": 0,
-                "lvl3Hatches": 0,
-                "lvl3Cargo": 0,
-                "habStart1": 0,
-                "habStart2": 0,
-                "habEnd0": 0,
-                "habEnd1": 0,
-                "habEnd2": 0,
-                "habEnd3": 0,
-                "teammatesCarried": 0});*/
-            //document.getElementById("scoutingLog").innerHTML = "Scouted Data:";
+            payload.team = teamNum;
+            payload.match = teamRow;
+            document.getElementById("shade").style.top = "280px";
+            document.getElementById("shade").style.left = "1035px";
+            document.getElementById("shade").style.width = "225px";
+            document.getElementById("shade").style.height = "291px";
+            time = 0;
+            buttonType = "start";
+            shooting = false;
+            spotNum = 1;
+            document.getElementById("pickup").className = "button scout_button pickup_button sunk";
+            document.getElementById("shoot").className = "button scout_button shoot_button sunk";
+            document.getElementById("endgam").className = "button scout_button endgam_button sunk";
             openTab('scouting');
         }
 
         var buttonType = "start";
         var shooting = false;
+        var spotNumTemp = 0;
         function scoutButton(stat) {
             if (stat == "pickup") {
                 document.getElementById("shoot").className = "button scout_button shoot_button sunk";
                 document.getElementById("endgam").className = "button scout_button endgam_button sunk";
                 document.getElementById("pickup").className = "button scout_button pickup_button raised";
                 document.getElementById("shoot").innerHTML = "Shooting";
-                var kiddos = document.getElementById("scouting").childNodes;
-                for (var i = 0; i < spotNum - 1; i++) {
-                    document.getElementById("scouting").removeChild(kiddos[kiddos.length - 1]);
-                }
-                spotNum = 1;
                 document.getElementById("shade").style.top = "280px";
                 document.getElementById("shade").style.left = "1035px";
                 document.getElementById("shade").style.width = "225px";
@@ -496,12 +487,12 @@
                 payload.endgame.timestamp = parseInt(time.toString());
                 buttonType = stat;
             } else if (stat.charAt(stat.length - 2) == 'u') {
-                document.getElementById(stat.substring(0, stat.length - 5) + "_false").style.boxShadow = "1px 1px black";
-                document.getElementById(stat).style.boxShadow = "-1px -1px black";
+                document.getElementById(stat.substring(0, stat.length - 5) + "_false").style.boxShadow = "2px 2px black";
+                document.getElementById(stat).style.boxShadow = "-2px -2px black";
                 payload.endgame[stat.substring(0, stat.length - 5)] = true;
             } else {
-                document.getElementById(stat.substring(0, stat.length - 6) + "_true").style.boxShadow = "1px 1px black";
-                document.getElementById(stat).style.boxShadow = "-1px -1px black";
+                document.getElementById(stat.substring(0, stat.length - 6) + "_true").style.boxShadow = "2px 2px black";
+                document.getElementById(stat).style.boxShadow = "-2px -2px black";
                 payload.endgame[stat.substring(0, stat.length - 6)] = false;
             }
         }
@@ -509,43 +500,45 @@
         var spotNum2 = 0;
         function powerPort(stat) {
             var butt = document.getElementById(stat);
+            document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
+            spotNum -= 1;
             spotNum2 -= 1;
             document.getElementById("shoot").innerHTML = (spotNum2) + " left";
             if (stat == "small") {
                 payload.events.push({
-                "type": 1,
-                "x": x,
-                "y": y,
-                "timestamp": parseInt(time.toString()),
-                "result": 0
+                    "type": 1,
+                    "x": x,
+                    "y": y,
+                    "timestamp": parseInt(time.toString()),
+                    "result": 0
             });} else if (stat == "big") {
                 payload.events.push({
-                "type": 1,
-                "x": x,
-                "y": y,
-                "timestamp": parseInt(time.toString()),
-                "result": 1
-            });} else if (stat == "miss") {
-                payload.events.push({
-                "type": 1,
-                "x": x,
-                "y": y,
-                "timestamp": parseInt(time.toString()),
-                "result": 3
+                    "type": 1,
+                    "x": x,
+                    "y": y,
+                    "timestamp": parseInt(time.toString()),
+                    "result": 1
             });} else if (stat == "low") {
                 payload.events.push({
-                "type": 1,
-                "x": x,
-                "y": y,
-                "timestamp": parseInt(time.toString()),
-                "result": 2
+                    "type": 1,
+                    "x": x,
+                    "y": y,
+                    "timestamp": parseInt(time.toString()),
+                    "result": 2
+            });} else if (stat == "miss") {
+                payload.events.push({
+                    "type": 1,
+                    "x": x,
+                    "y": y,
+                    "timestamp": parseInt(time.toString()),
+                    "result": 3
             });} else if (stat == "clear") {
                 payload.events.push({
-                "type": 1,
-                "x": x,
-                "y": y,
-                "timestamp": parseInt(time.toString()),
-                "result": 4
+                    "type": 1,
+                    "x": x,
+                    "y": y,
+                    "timestamp": parseInt(time.toString()),
+                    "result": 4
             });}
             if (spotNum2 == 0) {
                 scoutButton("pickup");
@@ -579,28 +572,7 @@
         }
 
         function endMatch() {
-            var dater = JSON.stringify(payload);
-            console.log(dater);
             var dater2 = simplify(payload);
-            console.log(dater2);
-            console.log("time:    " + (dater2[0] & 0xFF));
-            console.log("buddy:   " + ((dater2[0] & 0x100) >> 8));
-            console.log("success: " + ((dater2[0] & 0x200) >> 9));
-            console.log("level:   " + ((dater2[0] & 0x400) >> 10));
-            console.log("attempt: " + ((dater2[0] & 0x800) >> 11));
-            console.log("team:    " + ((dater2[0] & 0xFFFF0000) >> 16));
-
-            console.log("numEvents: " + (dater2[1] & 0x7));
-            console.log("alliance:  " + ((dater2[1] & 0x80) >> 7));
-            console.log("start_y:   " + ((dater2[1] & 0xFF00) >> 8));
-            console.log("start_x:   " + ((dater2[1] & 0xFF0000) >> 16));
-            console.log("matchNum:  " + ((dater2[1] & 0xFF000000) >> 24));
-
-            console.log("eventTime:   " + (dater2[2] & 0xFF));
-            console.log("eventY:      " + ((dater2[2] & 0xFF00) >> 8));
-            console.log("eventX:      " + ((dater2[2] & 0xFF0000) >> 16));
-            console.log("eventResult: " + ((dater2[2] & 0x7000000 >> 24)));
-            console.log("eventType:   " + ((dater2[2] & 0x8000000) >> 27));
             var qrCode = document.createElement("img");
             qrCode.src = "https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=" + dater2 + "&chld=L|1&choe=UTF-8";
             qrCode.style.height = "90%";
@@ -609,6 +581,37 @@
             qrCode.style.top = "32px";
             qrCode.style.left = "16px";
             scouting.appendChild(qrCode);
+            var doneButton = document.createElement("button");
+            doneButton.setAttribute("onclick", "doneScouting()");
+            doneButton.innerHTML = "Return to matches";
+            doneButton.style.width = "600px";
+            doneButton.style.height = "200px";
+            doneButton.style.position = "absolute";
+            doneButton.style.top = "32px";
+            doneButton.style.right = "16px";
+            doneButton.style.backgroundColor = "lightGray";
+            scouting.appendChild(doneButton);
+        }
+
+        function doneScouting() {
+            openTab('matches');
+            document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
+            document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
+            document.getElementById('matchListContainer').children[0].children[matchRow].children[matchCol].setAttribute('style', 'background-color: rgb(0, 255, 0); color: white;');
+            document.getElementById("matchButton").innerHTML = "Start Match";
+            document.getElementById("matchButton").setAttribute("onclick", "startMatch()");
+            document.getElementById("endgameButtonCont").style.display = "none";
+            while (document.getElementById("scouting").lastChild.id != "matchButton") {
+                document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
+            }
+            document.getElementById("attempt_true").style.boxShadow = "2px 2px black";
+            document.getElementById("attempt_false").style.boxShadow = "2px 2px black";
+            document.getElementById("success_true").style.boxShadow = "2px 2px black";
+            document.getElementById("success_false").style.boxShadow = "2px 2px black";
+            document.getElementById("level_true").style.boxShadow = "2px 2px black";
+            document.getElementById("level_false").style.boxShadow = "2px 2px black";
+            document.getElementById("buddy_true").style.boxShadow = "2px 2px black";
+            document.getElementById("buddy_false").style.boxShadow = "2px 2px black";
         }
 
         function simplify(s) {
@@ -634,16 +637,11 @@
                 var P = s.events[i].timestamp & 0xFF;
                 P = P | ((s.events[i].y & 0xFF) << 8);
                 P = P | ((s.events[i].x & 0xFF) << 16);
-                P = P | ((s.events[i].result & 0xFF) << 24);
-                P = P | ((s.events[i].type & 0xFF) << 27);
+                P = P | ((s.events[i].result & 0xF) << 24);//this wrong?
+                P = P | ((s.events[i].type & 0x1) << 27);  //this wrong?
                 out.push(P);
             }
             return out;
-        }
-
-        function cancelScout() {
-            lastMatchTemp[lastStat] -= 1;
-            document.getElementById("scoutingLog").innerHTML += "<br>" + lastStat + " cancelled";
         }
 
         function openTab(tab) {
@@ -655,12 +653,11 @@
                 showTeamsList();
             }
             if (tab == 'matches') {
-                //showMatchList();
-                scoutTeam(6800, 0, 0);
+                showMatchList();
             }
-            if (tab == 'scouting') {
+            /*if (tab == 'scouting') {
                 document.getElementById("infoTab").innerHTML = teamTemp;
-            }
+            }*/
             document.getElementById(tab).style.display = "block";
         }
         
@@ -685,8 +682,8 @@
             "endgame": {
                 "timestamp": 0,
                 "attempt": false,
-                "level": false,
                 "success": false,
+                "level": false,
                 "buddy": false
             }
         };
@@ -697,6 +694,9 @@
             spoot.setAttribute("class", "spot");
             spoot.style.left = (event.clientX - 12.5) + "px"
             spoot.style.top = (event.clientY - 12.5) + "px";
+            if (buttonType == "pickup") {
+                spotNum += 1;
+            }
             spoot.innerHTML = spotNum;
             if (buttonType == "shoot") {
                 spoot.style.backgroundColor = "rgb(0, 255, 0)";
@@ -712,23 +712,25 @@
                 a.style.backgroundColor = "rgb(0, 0, 0)";
                 document.getElementById("scouting").appendChild(a);
             }
-            spotNum += 1;
-            //console.log(buttonType);
             document.getElementById("scouting").appendChild(spoot);
             if (buttonType == "shoot" && shooting) {
                 document.getElementById("shade").style.top = "30px";
                 document.getElementById("shade").style.left = "16px";
                 document.getElementById("shade").style.width = "1018px";
                 document.getElementById("shade").style.height = "542px";
-                document.getElementById("shoot").innerHTML = (spotNum - 2) + " left";
-                spotNum2 = spotNum - 2;
+                document.getElementById("shoot").innerHTML = (spotNum) + " left";
+                spotNum2 = spotNum;
+                document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
             }
             x = parseInt((255 * (event.clientX - 12.5) / 1025).toString());
             y = parseInt((254 * (540 - (event.clientY - 30)) / 540).toString());
             if (buttonType == "start") {
                 payload.start_position_x = x;
                 payload.start_position_y = y;
+                spotNum = 0;
                 scoutButton("pickup");
+                spotNum = 0;
+                document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
             } else if (buttonType == "pickup") {
                 payload.events.push({
                     "type": 0,
@@ -738,7 +740,13 @@
                     "result": 5
                 });
             }
-            //console.log(payload);
+            if (spotNum >= 5) {
+                buttonType = "shoot";
+                shooting = true;
+                document.getElementById("pickup").className = "button scout_button pickup_button sunk";
+                document.getElementById("endgam").className = "button scout_button endgam_button sunk";
+                document.getElementById("shoot").className = "button scout_button shoot_button raised";
+            }
         }
     </script>
 </html>
