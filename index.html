@@ -3,7 +3,7 @@
     <title>Infinite Recharge Scouting App</title>
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 
-    <div class='tabBar'></div>
+    <div class='tabBar' id='tabBar' onclick='doneScouting()' style='text-align: center;'></div>
 
     <div id="matches" class="w3-container tab" style="display:none">
         <div class='w3-bar-block' id='matchListContainer'></div>
@@ -41,7 +41,7 @@
             </div>
             <rect height="290px" width="286.03" class="cover" id="shade"></rect>
         </div>
-        <button onclick="startMatch()" id="matchButton" style="width: 100%; position: absolute; left: 0px; top: 570px">Start Match</button>
+        <button onclick="startMatch(1)" id="matchButton1" style="width: 25%; position: absolute; left: 25%; top: 575px">Start Match w/ 1 Ball</button><button onclick="startMatch(2)" id="matchButton2" style="width: 25%; position: absolute; left: 50%; top: 575px">Start Match w/ 2 Balls</button><button onclick="startMatch(3)" id="matchButton3" style="width: 25%; position: absolute; left: 75%; top: 575px">Start Match w/ 3 Balls</button><button onclick="startMatch(0)" id="matchButton0" style="width: 25%; position: absolute; left: 0px; top: 575px">Start Match w/ 0 Balls</button>
     </div>
 
     <div id="sync" class="w3-container tab syncy" style="display:none">
@@ -56,12 +56,12 @@
         Event Code: <input type="text" name="eventCode" id="eventCodeIn">
         <p></p>
         <div style="width: 50%; margin: auto">
-            <button class="w3-button" onclick="importTBA()" style="display: inline-block">Import from TBA</button>
+            <button class="w3-button" onclick="importTBA()" style="display: inline-block; width: 100%; height: 300px; background-color: rgb(240, 240, 240)">Import from TBA</button>
             <p id="checkImportTBA" style="display: inline-block">Not downloaded</p>
         </div>
     </div>
 
-    <script src="min_tba.js"></script>
+    <script src="https://mray-tba.s3.us-east-2.amazonaws.com/bundle.js"></script>
     <script>
         var rawMatchImport = [];
         function importTBA() {
@@ -124,6 +124,41 @@
         var firstMatch = 0;
         var variables = ["Num", "Lvl 1<br>Hatches", "Lvl 1<br>Cargo", "Lvl 2<br>Hatches", "Lvl 2<br>Cargo", "Lvl 3<br>Hatches", "Lvl 3<br>Cargo", "Hab<br>Start 1", "Hab<br>Start 2", "Hab<br>End 0", "Hab<br>End 1", "Hab<br>End 2", "Hab<br>End 3", "Teammates<br>Carried"];
         var variablesReal = ["team_number", "lvl1Hatches", "lvl1Cargo", "lvl2Hatches", "lvl2Cargo", "lvl3Hatches", "lvl3Cargo", "habStart1", "habStart2", "habEnd0", "habEnd1", "habEnd2", "habEnd3", "teammatesCarried"];
+        var countTime = {};
+        var buttonType = "start";
+        var shooting = false;
+        var spotNumTemp = 0;
+        var spotNum2 = 99;
+        var time = 0;
+        document.getElementById('matchButton0').style.height = (window.innerHeight - 580) + 'px';
+        document.getElementById('matchButton1').style.height = (window.innerHeight - 580) + 'px';
+        document.getElementById('matchButton2').style.height = (window.innerHeight - 580) + 'px';
+        document.getElementById('matchButton3').style.height = (window.innerHeight - 580) + 'px';
+        document.getElementById("matchButton1").style.display = 'block';
+        document.getElementById("matchButton2").style.display = 'block';
+        document.getElementById("matchButton3").style.display = 'block';
+        document.getElementById('tabBar').style.fontSize = document.getElementById('tabBar').style.height - 2;
+        var spotNum = 1;
+        var payload = {
+            "match": 107,
+            "team": 6800,
+            "alliance": "blue",
+            "start_position_x": 0,
+            "start_position_y": 0,
+            "events": [],
+            "endgame": {
+                "timestamp": 0,
+                "attempt": false,
+                "success": false,
+                "level": false,
+                "buddy": false
+            }
+        };
+        var x = 0;
+        var y = 0;
+        var xTemp = 0;
+        var yTemp = 0;
+        var eventTemp = {};
         openTab('sync');
 
         function showMatchList() {
@@ -178,6 +213,21 @@
         }
 
         function scoutTeam(teamNum, teamRow, teamCol) {
+            payload = {
+                "match": 234,
+                "team": 6800,
+                "alliance": "blue",
+                "start_position_x": 0,
+                "start_position_y": 0,
+                "events": [],
+                "endgame": {
+                    "timestamp": 0,
+                    "attempt": false,
+                    "success": false,
+                    "level": false,
+                    "buddy": false
+                }
+            };
             teamTemp = teamNum;
             matchRow = teamRow;
             matchCol = teamCol;
@@ -187,6 +237,10 @@
             document.getElementById("shade").style.left = "1035px";
             document.getElementById("shade").style.width = "225px";
             document.getElementById("shade").style.height = "291px";
+            document.getElementById("matchButton1").style.display = 'block';
+            document.getElementById("matchButton2").style.display = 'block';
+            document.getElementById("matchButton3").style.display = 'block';
+            document.getElementById('tabBar').innerHTML = teamNum;
             time = 0;
             buttonType = "start";
             shooting = false;
@@ -195,11 +249,9 @@
             document.getElementById("shoot").className = "button scout_button shoot_button sunk";
             document.getElementById("endgam").className = "button scout_button endgam_button sunk";
             openTab('scouting');
+            addSpot({clientX: 0, clientY: 0});
         }
-
-        var buttonType = "start";
-        var shooting = false;
-        var spotNumTemp = 0;
+        
         function scoutButton(stat) {
             if (stat == "pickup") {
                 document.getElementById("shoot").className = "button scout_button shoot_button sunk";
@@ -210,6 +262,7 @@
                 document.getElementById("shade").style.left = "1035px";
                 document.getElementById("shade").style.width = "225px";
                 document.getElementById("shade").style.height = "291px";
+                spotNum2 = 99;
                 buttonType = stat;
             } else if (stat == "shoot") {
                 document.getElementById("pickup").className = "button scout_button pickup_button sunk";
@@ -244,7 +297,6 @@
             }
         }
 
-        var spotNum2 = 0;
         function powerPort(stat) {
             var butt = document.getElementById(stat);
             document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
@@ -279,7 +331,7 @@
                     "y": y,
                     "timestamp": parseInt(time.toString()),
                     "result": 3
-            });} else if (stat == "clear") {
+            });} else if (stat == "other") {
                 payload.events.push({
                     "type": 1,
                     "x": x,
@@ -302,18 +354,30 @@
                 }
             }, 10);
         }
-        var time = 0;
-        function startMatch() {
-            document.getElementById("matchButton").setAttribute("onclick", "endMatch()");
-            document.getElementById("matchButton").innerHTML = "0.0";
+        
+        function startMatch(bawls) {
+            scoutButton('pickup');
             document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
-            var countTime = setInterval(function () {
+            spotNum = 0;
+            document.getElementById("matchButton0").style.width = '50%';
+            document.getElementById("matchButton1").style.width = '50%';
+            document.getElementById("matchButton1").style.left = '50%';
+            document.getElementById("matchButton1").innerHTML = 'U N D O';
+            document.getElementById("matchButton1").setAttribute("onclick", "cancel()");
+            document.getElementById("matchButton2").style.display = 'none';
+            document.getElementById("matchButton3").style.display = 'none';
+            document.getElementById("matchButton0").setAttribute("onclick", "endMatch()");
+            document.getElementById("matchButton0").innerHTML = "0.0";
+            for (var i = 0; i < bawls; i++) {
+                addSpot(eventTemp);
+            }
+            countTime = setInterval(function () {
                 if (time <= 150) {
                     time += 0.1;
-                    document.getElementById("matchButton").innerHTML = time.toFixed(1);
+                    document.getElementById("matchButton0").innerHTML = time.toFixed(1);
                 } else {
                     clearInterval(countTime);
-                    document.getElementById("matchButton").innerHTML = "Submit Match";
+                    document.getElementById("matchButton0").innerHTML = "Submit Match";
                 }
             }, 100);
         }
@@ -327,6 +391,7 @@
             qrCode.style.margin = "auto";
             qrCode.style.top = "32px";
             qrCode.style.left = "16px";
+            qrCode.style.zIndex = 999;
             scouting.appendChild(qrCode);
             var doneButton = document.createElement("button");
             doneButton.setAttribute("onclick", "doneScouting()");
@@ -341,14 +406,21 @@
         }
 
         function doneScouting() {
+            clearInterval(countTime);
             openTab('matches');
-            document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
-            document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
             document.getElementById('matchListContainer').children[0].children[matchRow].children[matchCol].setAttribute('style', 'background-color: rgb(0, 255, 0); color: white;');
-            document.getElementById("matchButton").innerHTML = "Start Match";
-            document.getElementById("matchButton").setAttribute("onclick", "startMatch()");
+            document.getElementById("matchButton0").innerHTML = "Start Match";
+            document.getElementById("matchButton0").setAttribute("onclick", "startMatch()");
+            document.getElementById("matchButton0").style.width = '25%';
+            document.getElementById("matchButton1").style.display = 'block';
+            document.getElementById("matchButton1").style.width = '25%';
+            document.getElementById("matchButton1").style.left = '25%';
+            document.getElementById("matchButton1").innerHTML = 'Start Match w/ 1 Ball';
+            document.getElementById("matchButton1").setAttribute("onclick", "startMatch('1')");
+            document.getElementById("matchButton2").style.display = 'block';
+            document.getElementById("matchButton3").style.display = 'block';
             document.getElementById("endgameButtonCont").style.display = "none";
-            while (document.getElementById("scouting").lastChild.id != "matchButton") {
+            while (document.getElementById("scouting").lastChild.id != "matchButton0") {
                 document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
             }
             document.getElementById("attempt_true").style.boxShadow = "2px 2px black";
@@ -359,6 +431,29 @@
             document.getElementById("level_false").style.boxShadow = "2px 2px black";
             document.getElementById("buddy_true").style.boxShadow = "2px 2px black";
             document.getElementById("buddy_false").style.boxShadow = "2px 2px black";
+        }
+
+        function cancel() {
+            payload.events.pop();
+            if (document.getElementById("scouting").lastChild.id != "matchButton0") {
+                if (buttonType == 'shoot' && shooting && spotNum2 != 99) {
+                    spotNum2 += 1;
+                    spotNum += 1;
+                    document.getElementById("shoot").innerHTML = (spotNum2) + " left";
+                    var spoot = document.createElement('div');
+                    spoot.setAttribute("class", "spot");
+                    spoot.style.left = (xTemp - 12.5) + "px"
+                    spoot.style.top = (yTemp - 12.5) + "px";
+                    spoot.style.backgroundColor = "rgb(0, 255, 0)";
+                    spoot.innerHTML = "S";
+                    document.getElementById("scouting").appendChild(spoot);
+                } else {
+                    document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
+                    spotNum -= 1;
+                }
+            } else {
+                spotNum = 0;
+            }
         }
 
         function simplify(s) {
@@ -378,14 +473,14 @@
             }
             B = B | ((s.start_position_y & 0xFF) << 8);
             B = B | ((s.start_position_x & 0xFF) << 16);
-            B = B | ((s.match & 0xFF) << 24);
+            B = B | (((s.match + 1) & 0xFF) << 24);
             out.push(B);
             for (var i = 0; i < s.events.length; i++) {
                 var P = s.events[i].timestamp & 0xFF;
                 P = P | ((s.events[i].y & 0xFF) << 8);
                 P = P | ((s.events[i].x & 0xFF) << 16);
-                P = P | ((s.events[i].result & 0xF) << 24);//this wrong?
-                P = P | ((s.events[i].type & 0x1) << 27);  //this wrong?
+                P = P | ((s.events[i].result & 0xF) << 24);
+                P = P | ((s.events[i].type & 0x1) << 27);
                 out.push(P);
             }
             return out;
@@ -416,24 +511,6 @@
             }
         }
 
-        var spotNum = 1;
-        var payload = {
-            "match": 107,
-            "team": 6800,
-            "alliance": "blue",
-            "start_position_x": 0,
-            "start_position_y": 0,
-            "events": [],
-            "endgame": {
-                "timestamp": 0,
-                "attempt": false,
-                "success": false,
-                "level": false,
-                "buddy": false
-            }
-        };
-        var x = 0;
-        var y = 0;
         function addSpot(event) {
             var spoot = document.createElement('div');
             spoot.setAttribute("class", "spot");
@@ -447,18 +524,29 @@
                 spoot.style.backgroundColor = "rgb(0, 255, 0)";
                 spoot.innerHTML = "S";
             } else if (buttonType == "start") {
+                eventTemp = event;
                 var a = document.createElement('rect');
                 a.style.position = "absolute";
-                a.style.width = "10px";
-                a.style.height = "10px";
-                a.style.left = (event.clientX - 5) + "px";
-                a.style.top = (event.clientY - 5) + "px";
-                a.style.borderRadius = "5px";
-                a.style.backgroundColor = "rgb(0, 0, 0)";
+                a.style.width = "25px";
+                a.style.height = "25px";
+                a.style.left = (event.clientX - 12.5) + "px";
+                a.style.top = (event.clientY - 12.5) + "px";
+                a.style.borderRadius = "12.5px";
+                a.style.backgroundColor = "rgba(0, 0, 0, 0)";
+                a.style.borderStyle = 'solid';
+                a.style.borderColor = 'rgb(255, 255, 255)';
+                a.style.borderWidth = '5px';
+                a.id = 'tempy';
+                if (typeof document.getElementById('scouting').lastChild != 'undefined') {
+                    if (document.getElementById('scouting').lastChild.id == 'tempy') {
+                        document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
+                    }
+                }
                 document.getElementById("scouting").appendChild(a);
             }
-            document.getElementById("scouting").appendChild(spoot);
+
             if (buttonType == "shoot" && shooting) {
+                document.getElementById("scouting").appendChild(spoot);
                 document.getElementById("shade").style.top = "30px";
                 document.getElementById("shade").style.left = "16px";
                 document.getElementById("shade").style.width = "1018px";
@@ -469,14 +557,13 @@
             }
             x = parseInt((255 * (event.clientX - 12.5) / 1025).toString());
             y = parseInt((254 * (540 - (event.clientY - 30)) / 540).toString());
+            xTemp = event.clientX;
+            yTemp = event.clientY;
             if (buttonType == "start") {
                 payload.start_position_x = x;
                 payload.start_position_y = y;
-                spotNum = 0;
-                scoutButton("pickup");
-                spotNum = 0;
-                document.getElementById("scouting").removeChild(document.getElementById("scouting").lastChild);
             } else if (buttonType == "pickup") {
+                document.getElementById("scouting").appendChild(spoot);
                 payload.events.push({
                     "type": 0,
                     "x": x,
