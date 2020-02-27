@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html>
+    <title>Admin Scouting App</title>
+    <button onclick="switchTab()" id="switchButton" style="width: 100%; height: 100px; background-color: rgb(220, 220, 220); font-family: 'Courier New', Courier, monospace; font-size: 90px;">View Teams</button>
+
+    <div id="inputStuff" style="display: block">
+        <div id='wee' width='100%' height='100%'></div>
+        <label class="inputButton" id='eee'>
+            TAKE PICTURE<input type=file accept="image/*" capture=environment onchange="openQRCamera(this);"></input>
+        </label>
+
+        <div style="width: 80px; font-family: 'Courier New', Courier, monospace; font-size: 30px; margin: auto;">Data:</div>
+        <div class="messageDisplay" id="messageDisplay"></div>
+    </div>
+
+    <div id="teams" style="display: none">
+        <table id="teamTable" class="teamTable" width="100%">
+            <tr>
+                <th class="tabE button a" onclick="sortTeams(0)" id='bleh1'>Team #</th>
+                <th class="tabE button a" onclick="sortTeams(1)" id='bleh2'>Matches</th class="tabE">
+                <th class="tabE button a" onclick="sortTeams(2)" id='bleh3'>Balls In</th class="tabE">
+                <th class="tabE button a" onclick="sortTeams(3)" id='bleh4'>Balls Out</th class="tabE">
+                <th class="tabE button a" onclick="sortTeams(4)" id='bleh5'>Inner</th class="tabE">
+                <th class="tabE button a" onclick="sortTeams(5)" id='bleh6'>Outer</th class="tabE">
+                <th class="tabE button a" onclick="sortTeams(6)" id='bleh7'>Lower</th class="tabE">
+                <th class="tabE button a" onclick="sortTeams(7)" id='bleh8'>Miss</th class="tabE">
+                <th class="tabE button a" onclick="sortTeams(8)" id='bleh9'>Other</th class="tabE">
+                <th class="tabE button a" onclick="sortTeams(9)" id='bleh10'>Hangs</th class="tabE">
+            </tr>
+        </table>
+    </div>
+
+    <div id="team" style="display: none">
+        <table id="matchTable" class="matchTable" width="100%">
+            <tr id="STOP" height='90px'>
+                <th class="tabE button a" onclick="sortMatches(0)">Match #</th>
+                <th class="tabE button a" onclick="sortMatches(1)">Balls In</th class="tabE">
+                <th class="tabE button a" onclick="sortMatches(2)">Balls Out</th class="tabE">
+                <th class="tabE button a" onclick="sortMatches(3)">Inner</th class="tabE">
+                <th class="tabE button a" onclick="sortMatches(4)">Outer</th class="tabE">
+                <th class="tabE button a" onclick="sortMatches(5)">Lower</th class="tabE">
+                <th class="tabE button a" onclick="sortMatches(6)">Miss</th class="tabE">
+                <th class="tabE button a" onclick="sortMatches(7)">Other</th class="tabE">
+            </tr>
+        </table>
+    </div>
+</html>
+
+<script src="https://rawgit.com/sitepoint-editors/jsqrcode/master/src/qr_packed.js"></script>
+<script src="https://rawgit.com/pa7/heatmap.js/master/build/heatmap.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.8.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.8.0/firebase-analytics.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.8.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.8.0/firebase-database.js"></script>
+<script src="https://mray-tba.s3.us-east-2.amazonaws.com/bundle.js"></script>
+<script>
+    var firebaseConfig = {
+        apiKey: "AIzaSyBCkRFpZZGvysBQm7uEGTgKuKn9kHESLgY",
+        authDomain: "viperbotsvalor.firebaseapp.com",
+        databaseURL: "https://viperbotsvalor.firebaseio.com",
+        projectId: "viperbotsvalor",
+        storageBucket: "viperbotsvalor.appspot.com",
+        messagingSenderId: "551998214691",
+        appId: "1:551998214691:web:eb630dd0b63ca8420cd796"
+    };
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
+    var teamy = 0;
+    var inMatches = [];
+    var inMatchesAuto = [];
+    var stats = ["team", "matches", "ballsIn", "ballsOut", "inner", "outer", "lower", "miss", "other", "hangs"];
+    var statsM = ["match", "ballsIn", "ballsOut", "inner", "outer", "lower", "miss", "other"];
+    var inTeams = [];
+    var l = 0;
+    switchTab();
+    importFB();
+    var matchy = [];
+    var tba = new TBA();
+    tba.getMatches('2019okok', function(matches) {matchy = matches}); //set matchy to every match imported from blue alliance
+    matchy.sort(function(a, b) {return a.match_number - b.match_number});
+    var fonty = (window.innerWidth / 30) + 'px';
+    for (var i = 1; i < 11; i++) {
+        eval("document.getElementById('bleh" + i + "').style.fontSize = (window.innerWidth / 40) + 'px';");
+    }
+
+    function switchTab() {
+        if (document.getElementById("teams").style.display == "block") { //if on teams tab, go to input tab
+            document.getElementById("teams").style.display = "none";
+            document.getElementById("inputStuff").style.display = "block";
+            document.getElementById("switchButton").innerHTML = "View Teams";
+        } else { //if on input tab, go to teams tab
+            document.getElementById("inputStuff").style.display = "none";
+            document.getElementById("team").style.display = "none";
+            document.getElementById("teams").style.display = "block";
+            document.getElementById("switchButton").innerHTML = "View Input";
+        }
+    }
+
+    function importFB() {
+        inTeams = []; //get rid of previous imported data
+        firebase.database().ref().once("value").then(function(snapshot) { //wait for data to get gotten
+            l = Object.values(snapshot.child('2019txaus').val()); //list of teams from firebase
+            for (var i = 1; i < l.length; i++) { //for each team...
+                var t = { //make a new team object
+                    "team": Object.values(l[i])[0].team,
+                    "matches": Object.values(l[i]).length,
+                    "ballsIn": -Object.values(l[i]).length,
+                    "ballsOut": 0,
+                    "inner": 0,
+                    "outer": 0,
+                    "lower": 0,
+                    "miss": 0,
+                    "other": 0,
+                    "hangs": 0,
+                    "matchesList": []
+                };
+                for (var k = 0; k < Object.values(l[i]).length; k++) { //for each match...
+                    t.matchesList.push(Object.values(Object.values(l[i])[k].events)); //push the match to the list of matches...
+                    t.matchesList[k].push(Object.keys(l[i])[k].substring(5, Object.keys(l[i])[k].length)); //and add the match number on the end
+                    for (var j = 0; j < Object.values(l[i])[k].events.length; j++) { //for each event...
+                        var event = Object.values(Object.values(l[i])[k].events)[j]; //just to make things cleaner
+                        if (event.type == 0) { //if type is pickup
+                            t.ballsIn += 1;
+                        } else { //if type if shoot
+                            t.ballsOut += 1;
+                            if (event.result == 0) { //if inner shot
+                                t.inner += 1;
+                            } else if (event.result == 1) { //if outer shot
+                                t.outer += 1;
+                            } else if (event.result == 2) { //if lower shot
+                                t.lower += 1;
+                            } else if (event.result == 3) { //if missed shot
+                                t.miss += 1;
+                            } else { //if something else
+                                t.other += 1;
+                            }
+                        }
+                    }
+                    if (Object.values(l[i])[k].endgame.success) { //if they hung in endgame
+                        t.hangs += 1;
+                    }
+                }
+                inTeams.push(t); //add the team to the list
+            }
+            renderTeamsTable(); //after every team has been added, (re)draw the teams table
+        });
+    }
+
+    function getOurM() {
+        for (var i = 0; i < matchy.length; i++) { //for each match...
+            for (var r = 0; r < 3; r++) { //for each red team...
+                if (matchy[i].alliances.red.team_keys[r] == 'frc6800' && matchy[i].comp_level == 'qm' && payload.match < matchy[i].match_number) { //if we're in the match and it's a qualification match and the match is after the most recently scouted match...
+                    color = 'blue'; //this may be arbitrary (but there's no need to remove it yet)
+                    return matchy[i]; //return our next soonest match
+                }
+            }
+            for (var b = 0; b < 3; b++) { //the same but for blue
+                if (matchy[i].alliances.blue.team_keys[b] == 'frc6800' && matchy[i].comp_level == 'qm' && payload.match < matchy[i].match_number) {
+                    color = 'red';
+                    return matchy[i];
+                }
+            }
+        }
+    }
+
+    function slackTalk() {
+        var stats = 'Match '; //start building the slack message
+        var color = 'blue'; //maybe useless
+        var match = getOurM(); //find our next soonest match
+        var red = match.alliances.red.team_keys; //just defined for simplicity
+        var blu = match.alliances.blue.team_keys;//below, add every team number from match to the message
+        stats += match.match_number + ': Red (' + red[0].substring(3, red[0].length) + ', ' + red[1].substring(3, red[1].length) + ', ' + red[2].substring(3, red[2].length) + ')  |  Blue (' + blu[0].substring(3, blu[0].length) + ', ' + blu[1].substring(3, blu[1].length) + ', ' + blu[2].substring(3, blu[2].length) + ')';
+
+        var x = new XMLHttpRequest();
+        var x2 = new XMLHttpRequest();
+        var message = {
+            channel: 'DAD3301L3', //this should be somewhere useful
+            text: stats
+        };
+        var message2 = {
+            channel: 'DAD3301L3', //this should be somewhere useful
+            thread_ts: '', //this is used to make replies
+            text: 'hehe haha'
+        };
+
+        x.open('POST', "https://hooks.slack.com/services/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", true);
+        x.send(JSON.stringify(message)); //post the team numbers first
+        var wait1 = setInterval(function() { //wait until that message is confirmed...
+            if (x.status == 200) { //and when it returns an okay status...
+                clearInterval(wait1); //stop checking,
+                x2.open('GET', "https://slack.com/api/conversations.history?token=xoxb-353022973907-956564241350-kJlp3mVClZMIHO7ijDPRxQ2e&channel=CQCAC4UVC");
+                x2.send(); //ask for the message history,
+                var wait2 = setInterval(function () { //wait until it returns that...
+                    if (x2.response != '') { //and when it does...
+                        clearInterval(wait2); //stop checking,
+                        setTimeout(function() { //wait a little bit,
+                            message2.thread_ts = JSON.parse(x2.response).messages[0].ts; //set the thread to the most recent message's id,
+                            makeThread(red, blu, message2); //and compose the replies
+                        }, 100);
+                    }
+                }, 100);
+            }
+        }, 100);
+    }
+
+    function makeThread(red, blu, message2) {
+        function loopyR(i) { //start some recursion!
+            setTimeout(function() {
+                var team = getOurM().alliances.red.team_keys[i].substring(3, getOurM().alliances.red.team_keys[i].length); //get a red team
+                var stats = red[i].substring(3, red[i].length); //start the reply with that team's number
+                if (typeof inTeams.find(function(t) {return t.team == team}) == 'undefined') { //if that team hasn't been imported,
+                    stats += ' - No Data'; //say so (although this should never happen except at the beginning)
+                } else { //if that team does have some imported data...
+                    var te = inTeams.find(function(t) {return t.team == team}); //save them and add their stats to the reply
+                    stats += '\n  Inner- ' + (te.inner / te.matches) + '\n  Outer- ' + (te.outer / te.matches) + '\n  Lower- ' + (te.lower / te.matches) + '\n  Miss-  ' + (te.miss / te.matches) + '\n  Other- ' + (te.other / te.matches) + '\n  Hangs- ' + (te.hangs / te.matches);
+                }
+                message2.text = stats;
+                eval("var y" + (i + 3) + " = new XMLHttpRequest();");
+                eval("y" + (i + 3) + ".open('POST', 'https://hooks.slack.com/services/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', true);");
+                eval("y" + (i + 3) + ".send(JSON.stringify(message2));"); //send the reply
+                if (i < 2) {
+                    loopyR(i + 1); //do that all again except for the next team (unless it's already reached the third)
+                };
+            }, 100); //but do a little pause between each reply so they stay in order
+        }
+        loopyR(0); //actually start the recursion
+
+        function loopyB(i) { //the exact same thing except for blue this time
+            setTimeout(function() {
+                var team = getOurM().alliances.blue.team_keys[i].substring(3, getOurM().alliances.blue.team_keys[i].length);
+                var stats = blu[i].substring(3, blu[i].length);
+                if (typeof inTeams.find(function(t) {return t.team == team}) == 'undefined') {
+                    stats += ' - No Data';
+                } else {
+                    var te = inTeams.find(function(t) {return t.team == team});
+                    stats += '\n  Inner- ' + (te.inner / te.matches) + '\n  Outer- ' + (te.outer / te.matches) + '\n  Lower- ' + (te.lower / te.matches) + '\n  Miss-  ' + (te.miss / te.matches) + '\n  Other- ' + (te.other / te.matches) + '\n  Hangs- ' + (te.hangs / te.matches);
+                }
+                message2.text = stats;
+                eval("var y" + (i + 3) + " = new XMLHttpRequest();");
+                eval("y" + (i + 3) + ".open('POST', 'https://hooks.slack.com/services/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', true);");
+                eval("y" + (i + 3) + ".send(JSON.stringify(message2));");
+                if (i < 2) {
+                    loopyB(i + 1);
+                };
+            }, 100);
+        }
+        setTimeout(function() {
+            loopyB(0);
+        }, 1000); //wait to do blue until a second after red's finished (or started? who knows)
+    }
+
+    function checkInMatch() {
+        inTeams = [];
+        importFB(); //re-import everything
+        setTimeout(function() {
+            renderTeamsTable(); //lol if only this worked
+            var opps = [];
+            var match = getOurM(); //get our next soonest match
+            for (var i = 0; i < 3; i++) { //for each red team...
+                opps.push(match.alliances.red.team_keys[i].substring(3, match.alliances.red.team_keys[i].length)); //add that team to opps
+                if (typeof inTeams.find(function(t) {return t.team == opps[i]}) != 'undefined') { //if the just-added team has some data...
+                    opps[i] = inTeams.find(function(t) {return t.team == opps[i]}); //replace the team number with that data
+                } else { //otherwise say they have no matches ('cause evidently they don't)
+                    opps[i] = {'matches': 0};
+                }
+            }
+            for (var i = 0; i < 3; i++) { //the exact same thing but for blue (also i is adjusted in some places to not override the red stuff)
+                opps.push(match.alliances.blue.team_keys[i].substring(3, match.alliances.blue.team_keys[i].length));
+                if (typeof inTeams.find(function(t) {return t.team == opps[i + 3]}) != 'undefined') {
+                    opps[i + 3] = inTeams.find(function(t) {return t.team == opps[i + 3]});
+                } else {
+                    opps[i + 3] = {'matches': 0};
+                }
+            }
+
+            var ourMatches = 1; //***this part may be broken***
+            for (var i = 0; i < matchy.length; i++) { //this part is just getOurM() without returns and only until line 292
+                for (var r = 0; r < 3; r++) {
+                    if (matchy[i].alliances.red.team_keys[r] == 'frc6800' && matchy[i].comp_level == 'qm' && payload.match >= matchy[i].match_number) {
+                        ourMatches += 1;
+                    }
+                }
+                for (var b = 0; b < 3; b++) {
+                    if (matchy[i].alliances.blue.team_keys[b] == 'frc6800' && matchy[i].comp_level == 'qm' && payload.match >= matchy[i].match_number) {
+                        ourMatches += 1;
+                    }
+                }
+            } //if every team has had as many matches as we will have had after our next soonest match minus one and one of those teams was just scouted / uploaded...
+            if ((opps[0].matches == ourMatches - 1) && (opps[1].matches == ourMatches - 1) && (opps[2].matches == ourMatches - 1) && (opps[3].matches == ourMatches - 1) && (opps[4].matches == ourMatches - 1) && (opps[5].matches == ourMatches - 1) && (payload.team == opps[0].team || payload.team == opps[1].team || payload.team == opps[2].team || payload.team == opps[3].team || payload.team == opps[4].team || payload.team == opps[5].team)) { //maybe add that opps[0] != 0
+                slackTalk(); //then go compose a message and replies
+            }
+        }, 1000); //but do all that after waiting a bit
+    }
+
+    function sortTeams(stat) {
+        for (var i = 0; i < 9; i++) { //set all the labels to have white backgrounds
+            document.getElementById("teamTable").children[0].children[0].children[i].style.backgroundColor = "white";
+        }
+        if (stat == 0) { //if sorting by team number...
+            inTeams.sort(function(a, b) {return a[stats[stat]] - b[stats[stat]]}); //sort lowest to highest
+        } else {
+            inTeams.sort(function(a, b) {return b[stats[stat]] - a[stats[stat]]}); //otherwise, sort highest to lowest
+        }
+        document.getElementById("teamTable").children[0].children[0].children[stat].style.backgroundColor = "rgb(0, 255, 0)"; //set tha background of whatever stat was sorted by to green for uSeR cOnViNiEnCe
+        for (var i = 0; i < inTeams.length; i++) { //remove everything from the table
+            document.getElementById("teamTable").removeChild(document.getElementById("teamTable").lastChild);
+        }
+        renderTeamsTable(); //and add it all back again!
+    }
+
+    function renderTeamsTable() {
+        for (var i = 0; i < inTeams.length; i++) { //for each team...
+            var row = document.createElement("tr"); //make a row...
+            for (var j = 0; j < 10; j++) { //for each stat...
+                row.appendChild(document.createElement("th")); //make a new column thingy
+                row.children[j].setAttribute("class", "tabE"); //give it a style
+                row.children[j].style.fontSize = fonty; //and give it a font size dependent on the screen size
+            }
+            var teamButton = document.createElement('button'); //make a button...
+            teamButton.setAttribute('onclick', 'showTeam(' + inTeams[i].team + ')'); //that allows you to select a team...
+            teamButton.innerHTML = inTeams[i].team;
+            teamButton.style.fontSize = fonty;
+            teamButton.style.fontFamily = "'Courier New', Courier, monospace";
+            teamButton.style.fontWeight = 'bold';
+            teamButton.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+            teamButton.style.width = '100%';
+            teamButton.style.height = '100%';
+            teamButton.style.border = 'none';
+            row.children[0].appendChild(teamButton); //then make the team number that button
+            row.children[1].innerHTML = inTeams[i].matches; //add data to every column
+            row.children[2].innerHTML = inTeams[i].ballsIn;
+            row.children[3].innerHTML = inTeams[i].ballsOut;
+            row.children[4].innerHTML = inTeams[i].inner;
+            row.children[5].innerHTML = inTeams[i].outer;
+            row.children[6].innerHTML = inTeams[i].lower;
+            row.children[7].innerHTML = inTeams[i].miss;
+            row.children[8].innerHTML = inTeams[i].other;
+            row.children[9].innerHTML = inTeams[i].hangs;
+            document.getElementById("teamTable").appendChild(row); //add the entire row to the table
+        }
+    }
+
+    function showTeam(teamNum) {
+        inMatches = [];
+        inMatchesAuto = []; //reset these in case they weren't empty already
+        teamy = teamNum;
+        switchTab(); //easily change it so pressing this takes you back to teams
+        document.getElementById('inputStuff').style.display = 'none'; //hide the newly-shown input stuff
+        document.getElementById("switchButton").innerHTML = "View Teams";
+
+        var matches = Object.values(inTeams.find(function(e) {return e.team == teamNum}).matchesList); //get the selected team's matches
+        for (var i = 0; i < matches.length; i++) { //for each match
+            var t = { //rebuild the match!(?)
+                "match": matches[i][matches[i].length - 1], //remember adding the match number to the end of every match? I sure didn't until now
+                "ballsIn": -1, //just in case
+                "ballsOut": 0,
+                "inner": 0,
+                "outer": 0,
+                "lower": 0,
+                "miss": 0,
+                "other": 0
+            };
+            for (var j = 0; j < matches[i].length - 1; j++) { //for each event...
+                var event = matches[i][j]; //just for simplicity
+                if (event.type == 0) { //this is all the same as before but it felt necessary at the time
+                    t.ballsIn += 1;
+                } else {
+                    t.ballsOut += 1;
+                    if (event.result == 0) {
+                        t.inner += 1;
+                    } else if (event.result == 1) {
+                        t.outer += 1;
+                    } else if (event.result == 2) {
+                        t.lower += 1;
+                    } else if (event.result == 3) {
+                        t.miss += 1;
+                    } else {
+                        t.other += 1;
+                    }
+                }
+            }
+            inMatches.push(t);
+
+            var tA = { //this is the same but for stuff scored in auto(n(omous))
+                "match": matches[i][matches[i].length - 1],
+                "ballsIn": -1,
+                "ballsOut": 0,
+                "inner": 0,
+                "outer": 0,
+                "lower": 0,
+                "miss": 0,
+                "other": 0
+            };
+            for (var j = 0; j < matches[i].length - 1; j++) {
+                var event = matches[i][j];
+                if (event.timestamp < 15) {
+                    if (event.type == 0) {
+                        tA.ballsIn += 1;
+                    } else {
+                        tA.ballsOut += 1;
+                        if (event.result == 0) {
+                            tA.inner += 1;
+                        } else if (event.result == 1) {
+                            tA.outer += 1;
+                        } else if (event.result == 2) {
+                            tA.lower += 1;
+                        } else if (event.result == 3) {
+                            tA.miss += 1;
+                        } else {
+                            tA.other += 1;
+                        }
+                    }
+                }
+            }
+            inMatchesAuto.push(tA);
+
+            var row = document.createElement("tr"); //build the match table (but this part's kind of useless)
+            for (var j = 0; j < 8; j++) { //this is the same as with the team table but for matches. duh
+                row.appendChild(document.createElement("th"));
+                row.children[j].setAttribute("class", "tabE");
+                row.children[j].style.fontSize = fonty;
+            }
+            var heatButton = document.createElement('button');
+            heatButton.setAttribute('onclick', 'showHeat(' + inMatches[i].match + ')');
+            heatButton.innerHTML = inMatches[i].match;
+            heatButton.style.fontSize = fonty;
+            heatButton.style.fontFamily = "'Courier New', Courier, monospace";
+            heatButton.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+            heatButton.style.width = '100%';
+            heatButton.style.height = '100%';
+            heatButton.style.border = 'none';
+            row.children[0].appendChild(heatButton);
+            row.children[1].innerHTML = inMatches[i].ballsIn;
+            row.children[2].innerHTML = inMatches[i].ballsOut;
+            row.children[3].innerHTML = inMatches[i].inner;
+            row.children[4].innerHTML = inMatches[i].outer;
+            row.children[5].innerHTML = inMatches[i].lower;
+            row.children[6].innerHTML = inMatches[i].miss;
+            row.children[7].innerHTML = inMatches[i].other;
+            document.getElementById("matchTable").appendChild(row);
+        }
+
+        sortMatches(0); //overwrite all that building stuff!
+        document.getElementById('team').style.display = 'block'; //show the matches table
+    }
+
+    function sortMatches(stat) { //same as sortTeams(stat) but renderTeamsTable() is added in
+        for (var i = 0; i < 8; i++) {
+            document.getElementById("matchTable").children[0].children[0].children[i].style.backgroundColor = "white";
+        }
+        if (stat == 0) {
+            inMatches.sort(function(a, b) {return a[statsM[stat]] - b[statsM[stat]]});
+        } else {
+            inMatches.sort(function(a, b) {return b[statsM[stat]] - a[statsM[stat]]});
+        }
+        document.getElementById("matchTable").children[0].children[0].children[stat].style.backgroundColor = "rgb(0, 255, 0)";
+        while (document.getElementById('matchTable').lastChild.children[0].id != 'STOP') {
+            document.getElementById('matchTable').removeChild(document.getElementById('matchTable').lastChild);
+        }
+        var row1 = document.createElement('tr');
+        for (var j = 0; j < 8; j++) {
+            row1.appendChild(document.createElement("th"));
+            row1.children[j].setAttribute("class", "tabE");
+            row1.children[j].style.fontSize = fonty;
+        }
+        var totalButton = document.createElement('button');
+        totalButton.setAttribute('onclick', 'showHeat(0)');
+        totalButton.innerHTML = 'Total';
+        totalButton.style.fontSize = fonty;
+        totalButton.style.fontFamily = "'Courier New', Courier, monospace";
+        totalButton.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+        totalButton.style.width = '100%';
+        totalButton.style.height = '100%';
+        totalButton.style.border = 'none';
+        row1.children[0].appendChild(totalButton);
+        var teamT = inTeams.find(function(t) {return t.team == teamy});
+        row1.children[1].innerHTML = teamT.ballsIn;
+        row1.children[2].innerHTML = teamT.ballsOut;
+        row1.children[3].innerHTML = teamT.inner;
+        row1.children[4].innerHTML = teamT.outer;
+        row1.children[5].innerHTML = teamT.lower;
+        row1.children[6].innerHTML = teamT.miss;
+        row1.children[7].innerHTML = teamT.other;
+        document.getElementById("matchTable").appendChild(row1);
+        
+        for (var i = 0; i < Object.values(inTeams.find(function(e) {return e.team == teamy}).matchesList).length; i++) {
+            var row = document.createElement("tr");
+            for (var j = 0; j < 8; j++) {
+                row.appendChild(document.createElement("th"));
+                row.children[j].setAttribute("class", "tabE");
+                row.children[j].style.fontSize = fonty;
+            }
+            var heatButton = document.createElement('button');
+            heatButton.setAttribute('onclick', 'showHeat(' + inMatches[i].match + ')');
+            heatButton.innerHTML = inMatches[i].match;
+            heatButton.style.fontSize = fonty;
+            heatButton.style.fontFamily = "'Courier New', Courier, monospace";
+            heatButton.style.backgroundColor = 'rgba(0, 0, 0, 0)';
+            heatButton.style.width = '100%';
+            heatButton.style.height = '100%';
+            heatButton.style.border = 'none';
+            row.children[0].appendChild(heatButton);
+            row.children[1].innerHTML = '(' + inMatchesAuto.find(function(m) {return m.match == inMatches[i].match}).ballsIn + ') ' + inMatches[i].ballsIn; //the stuff in parentheseseseses is for auto(n(omous))
+            row.children[2].innerHTML = '(' + inMatchesAuto.find(function(m) {return m.match == inMatches[i].match}).ballsOut + ') ' + inMatches[i].ballsOut;
+            row.children[3].innerHTML = '(' + inMatchesAuto.find(function(m) {return m.match == inMatches[i].match}).inner + ') ' + inMatches[i].inner;
+            row.children[4].innerHTML = '(' + inMatchesAuto.find(function(m) {return m.match == inMatches[i].match}).outer + ') ' + inMatches[i].outer;
+            row.children[5].innerHTML = '(' + inMatchesAuto.find(function(m) {return m.match == inMatches[i].match}).lower + ') ' + inMatches[i].lower;
+            row.children[6].innerHTML = '(' + inMatchesAuto.find(function(m) {return m.match == inMatches[i].match}).miss + ') ' + inMatches[i].miss;
+            row.children[7].innerHTML = '(' + inMatchesAuto.find(function(m) {return m.match == inMatches[i].match}).other + ') ' + inMatches[i].other;
+            document.getElementById("matchTable").appendChild(row);
+        }
+    }
+
+    function showHeat(matchNum) {
+        if (document.getElementById('team').lastChild.id == 'heat1') { //if there's already a heatmap, hide the body
+            document.getElementById('team').removeChild(document.getElementById('team').lastChild);
+        }
+        var matchyList = Object.values(inTeams.find(function(e) {return e.team == teamy}).matchesList);
+        var match = 0;
+        if (matchNum != 0) {
+            match = matchyList.find(function(m) {return m[m.length - 1] == matchNum}); //return the match that has been selected
+        } else {
+            match = inTeams.find(function(t) {return t.team == teamy}).matchesList;
+        }
+
+        var heat1 = document.createElement('div'); //this section defines the container for the heatmap
+        heat1.setAttribute('class', 'heated');
+        heat1.setAttribute('id', 'heat1');
+        heat1.style.width = window.innerWidth + 'px';
+        heat1.style.height = (window.innerWidth * 800 / 424) + 'px'; //trsut me this works
+        heat1.style.position = 'absolute';
+        heat1.style.top = '-' + ((inMatches.length + 2) * fonty.substring(0, fonty.length - 2) + 95) + 'px';
+        heat1.style.left = '0px';
+        heat1.style.backgroundColor = 'rgb(50, 50, 50)';
+
+        var heat2 = document.createElement('img');
+        heat2.setAttribute('src', 'https://raw.githubusercontent.com/Machoo/ViperbotsScoutingApp/master/ScoutingApp/2020FieldFlipped.png');
+        heat2.style.transform = 'rotate(90deg)';
+        heat2.style.position = 'absolute';
+
+        if (window.innerWidth * 800 / 424 > window.innerHeight) { //this checks if the viewport is taller than the field image at maximum width and adjusts accordingly
+            heat1.style.height = window.innerHeight + 'px';
+            heat1.style.width = (window.innerHeight * 424 / 800) + 'px';
+            heat2.style.width = window.innerHeight + 'px';
+            heat2.style.top = (window.innerHeight / 4.5) + 'px';
+            heat2.style.left = '-' + (window.innerHeight * 424 / 1802) + 'px';
+        } else {
+            heat2.style.height = window.innerWidth + 'px';
+            heat2.style.top = (window.innerWidth / 2.25) + 'px';
+            heat2.style.left = '-' + (window.innerWidth * 800 / 1802) + 'px';
+        }
+        heat1.appendChild(heat2);
+
+        var heat3 = document.createElement('button');
+        heat3.style.position = 'absolute';
+        heat3.style.width = '100%';
+        heat3.style.height = '100%';
+        heat3.style.top = '0px';
+        heat3.style.left = '0px';
+        heat3.style.opacity = '0';
+        heat3.setAttribute('onclick', 'exitHeatmap()');
+
+        document.getElementById('team').appendChild(heat1);
+        
+
+        var points3 = [];
+        var points4 = [];
+        if (matchNum != 0) { //if you aren't looking for the total...
+            if (window.innerWidth * 800 / 424 > window.innerHeight) { //basically, add every event to the pickup list and shoot list
+                for (var i = 1; i < match.length - 1; i++) {
+                    if (match[i].type == 0) {
+                        points3.push({
+                            'x': parseInt((match[i].y * window.innerHeight * 424 / 800 / 256).toString()), //just trust that this works too
+                            'y': parseInt((match[i].x * window.innerHeight / 256).toString()),
+                            'value': 100
+                        });
+                    } else {
+                        points4.push({
+                            'x': parseInt((match[i].y * window.innerHeight * 424 / 800 / 256).toString()),
+                            'y': parseInt((match[i].x * window.innerHeight / 256).toString()),
+                            'value': 100
+                        });
+                    }
+                }
+                width = window.innerHeight;
+                height = window.innerHeight * 424 / 800;
+
+                var heatmapInstance3 = h337.create({ //instantiate the heatmaps
+                    container: heat1,
+                    radius: window.innerHeight / 20,
+                    blur: 1
+                });
+                var heatmapInstance4 = h337.create({
+                    container: heat1,
+                    radius: window.innerHeight / 20,
+                    blur: 1,
+                    gradient: {
+                        '.1': 'black', //the shot heatmap is black and white
+                        '.9': 'white'
+                    }
+                });
+            } else { //if you're on a widescreen...
+                for (var i = 1; i < match.length - 1; i++) {
+                    if (match[i].type == 0) {
+                        points3.push({
+                            'x': parseInt((match[i].y * window.innerWidth / 256).toString()),
+                            'y': parseInt((match[i].x * window.innerWidth * 800 / 424 / 256).toString()),
+                            'value': 100
+                        });
+                    } else {
+                        points4.push({
+                            'x': parseInt((match[i].y * window.innerWidth / 256).toString()),
+                            'y': parseInt((match[i].x * window.innerWidth * 800 / 424 / 256).toString()),
+                            'value': 100
+                        });
+                    }
+                }
+                width = window.innerWidth;
+                height = window.innerWidth * 800 / 424;
+            
+                var heatmapInstance3 = h337.create({
+                    container: heat1,
+                    radius: window.innerWidth / 20,
+                    blur: 1
+                });
+                var heatmapInstance4 = h337.create({
+                    container: heat1,
+                    radius: window.innerWidth / 20,
+                    blur: 1,
+                    gradient: {
+                        '.1': 'black',
+                        '.9': 'white'
+                    }
+                });
+            }
+        } else { //if you're looking for the total
+            if (window.innerWidth * 800 / 424 > window.innerHeight) { //basically, if you're on mobile
+                for (var k = 0; k < match.length; k++) {
+                    var match2 = match[k];
+                    for (var i = 1; i < match2.length - 1; i++) {
+                        if (match2[i].type == 0) {
+                            points3.push({
+                                'x': parseInt((match2[i].y * window.innerHeight * 424 / 800 / 256).toString()),
+                                'y': parseInt((match2[i].x * window.innerHeight / 256).toString()),
+                                'value': 100
+                            });
+                        } else {
+                            points4.push({
+                                'x': parseInt((match2[i].y * window.innerHeight * 424 / 800 / 256).toString()),
+                                'y': parseInt((match2[i].x * window.innerHeight / 256).toString()),
+                                'value': 100
+                            });
+                        }
+                    }
+                }
+                width = window.innerHeight;
+                height = window.innerHeight * 424 / 800;
+
+                var heatmapInstance3 = h337.create({
+                    container: heat1,
+                    radius: window.innerHeight / 20,
+                    blur: 1,
+                });
+                var heatmapInstance4 = h337.create({
+                    container: heat1,
+                    radius: window.innerHeight / 20,
+                    blur: 1,
+                    gradient: {
+                        '.1': 'black',
+                        '.9': 'white'
+                    }
+                });
+            } else { //or if you're a part of the PCMasterRace
+                for (var k = 0; k < match.length; k++) {
+                    var match2 = match[k];
+                    for (var i = 1; i < match2.length - 1; i++) {
+                        if (match2[i].type == 0) {
+                            points3.push({
+                                'x': parseInt((match2[i].y * window.innerWidth / 256).toString()),
+                                'y': parseInt((match2[i].x * window.innerWidth * 800 / 424 / 256).toString()),
+                                'value': 100
+                            });
+                        } else {
+                            points4.push({
+                                'x': parseInt((match2[i].y * window.innerWidth / 256).toString()),
+                                'y': parseInt((match2[i].x * window.innerWidth * 800 / 424 / 256).toString()),
+                                'value': 100
+                            });
+                        }
+                    }
+                }
+                width = window.innerWidth;
+                height = window.innerWidth * 800 / 424;
+            
+                var heatmapInstance3 = h337.create({
+                    container: heat1,
+                    radius: window.innerWidth / 20,
+                    blur: 1,
+                });
+                var heatmapInstance4 = h337.create({
+                    container: heat1,
+                    radius: window.innerWidth / 20,
+                    blur: 1,
+                    gradient: {
+                        '.1': 'black',
+                        '.9': 'white'
+                    }
+                });
+            }
+        }
+
+        var data3 = {
+            max: max,
+            data: points3
+        };
+        heatmapInstance3.setData(data3);
+        var data4 = {
+            max: max,
+            data: points4
+        };
+        heatmapInstance4.setData(data4);
+        heat1.appendChild(heat3)
+    }
+
+    function exitHeatmap() { //if you touch the heatmap it dies. you monster
+        if (document.getElementById('team').lastChild.id == 'heat1') {
+            document.getElementById('team').removeChild(document.getElementById('team').lastChild);
+        }
+    }
+
+    function openQRCamera(node) {
+        var reader = new FileReader(); //oh boy here we go
+        reader.onload = function() { //btw I stole this surrounding code from an open github library so...
+            node.value = "";
+            qrcode.callback = function(res) {
+                if(res instanceof Error) {
+                    alert("No QR code found. Please make sure the QR code is within the camera's frame and try again.");
+                } else { //here's where my code starts :)
+                    decodee(res); //decode the encoded encoding
+                    document.getElementById("messageDisplay").innerHTML = "Match: " +  //display whatever was just decodecoded
+                        payload.match + "<br>Team: " + 
+                        payload.team + "<br>Alliance: " + 
+                        payload.alliance + "<br>Start X: " + 
+                        payload.start_position_x + "<br>Start Y: " + 
+                        payload.start_position_y + "<br>Endgame Start: " + 
+                        payload.endgame.timestamp + "<br>Attempted Climb: " + 
+                        payload.endgame.attempt + "<br>Successful Climb: " + 
+                        payload.endgame.success + "<br>Level Hang: " + 
+                        payload.endgame.level + "<br>Hosted: " + 
+                        payload.endgame.buddy;
+                    for (var i = 1; i < payload.events.length; i++) { //for each decoded event...
+                        if (payload.events[i].type == 0) {
+                            document.getElementById("messageDisplay").innerHTML += "<br>Pickup ";
+                        } else {
+                            document.getElementById("messageDisplay").innerHTML += "<br>Shoot ";
+                        }
+                        document.getElementById("messageDisplay").innerHTML += i + ": at " + 
+                            payload.events[i].x + ", " + payload.events[i].y + " at " + 
+                            payload.events[i].timestamp + " seconds ";
+                        if (payload.events[i].result == 0) {
+                            document.getElementById("messageDisplay").innerHTML += "into the inner port";
+                        } else if (payload.events[i].result == 1) {
+                            document.getElementById("messageDisplay").innerHTML += "into the outer port";
+                        } else if (payload.events[i].result == 2) {
+                            document.getElementById("messageDisplay").innerHTML += "into the lower port";
+                        } else if (payload.events[i].result == 3) {
+                            document.getElementById("messageDisplay").innerHTML += "was missed";
+                        } else if (payload.events[i].result == 4) {
+                            document.getElementById("messageDisplay").innerHTML += "was moved";
+                        } else {
+                            document.getElementById("messageDisplay").innerHTML += "was picked up";
+                        }
+                    }
+                    exportFB(); //export whatever just got decoded to oblivion to firebase
+                    var good = document.createElement('div');
+                    good.style.height = '100%';
+                    good.style.width = '100%';
+                    good.style.backgroundColor = 'rgb(0, 255, 0)';
+                    good.style.fontSize = (window.innerWidth) + 'px';
+                    good.style.textAlign = 'center';
+                    good.innerHTML = '&#x2713;';
+                    document.getElementById('wee').appendChild(good); //make a big green screen and checkmark to signal to whoever's code I just scaned: "go away"
+                    checkInMatch(); //go check if it's time to send a slack message
+                    setTimeout(function() {document.getElementById('wee').removeChild(document.getElementById('wee').lastChild)}, 3000); //wait a lil bit then murder that big green nuisance
+                }
+            };
+            qrcode.decode(reader.result);
+        };
+        reader.readAsDataURL(node.files[0]);
+    }
+
+    var payload = {
+        "match": 0,
+        "team": 0000,
+        "alliance": "blue",
+        "start_position_x": 0,
+        "start_position_y": 0,
+        "events": [{
+                "type": 0,
+                "x": 0,
+                "y": 0,
+                "timestamp": 0,
+                "result": 0
+            }
+        ],
+        "endgame": {
+            "timestamp": 0,
+            "attempt": false,
+            "level": false,
+            "success": false,
+            "buddy": false
+        }
+    };
+
+    function decodee(ee) {
+        payload = { //reset the payload in case it was impure
+            "match": 0,
+            "team": 0000,
+            "alliance": "blue",
+            "start_position_x": 0,
+            "start_position_y": 0,
+            "events": [{
+                    "type": 0,
+                    "x": 0,
+                    "y": 0,
+                    "timestamp": 0,
+                    "result": 0
+                }
+            ],
+            "endgame": {
+                "timestamp": 0,
+                "attempt": false,
+                "level": false,
+                "success": false,
+                "buddy": false
+            }
+        };
+        var e = ee.split(","); //separate the scanned datums
+        payload.endgame.timestamp = (e[0] & 0xFF); //if I actually understood bitwise operations I could explain this
+        payload.endgame.buddy = !!((e[0] & 0x100) >> 8); //but since I definitely don't...
+        payload.endgame.level = !!((e[0] & 0x200) >> 9); //it just looks kinda cool
+        payload.endgame.success = !!((e[0] & 0x400) >> 10);
+        payload.endgame.attempt = !!((e[0] & 0x800) >> 11);
+        payload.team = ((e[0] & 0xFFFF0000) >> 16);
+
+        var eventCount = (e[1] & 0x7);
+        payload.alliance = ((e[1] & 0x80) >> 7);
+        payload.start_position_y = ((e[1] & 0xFF00) >> 8);
+        payload.start_position_x = ((e[1] & 0xFF0000) >> 16);
+        payload.match = ((e[1] & 0xFF000000) >> 24);
+
+        for (var i = 2; i < e.length; i++) { //this decodes all the events
+            payload.events.push({
+                "type": ((e[i] & 0xF000000) >> 27),
+                "x": ((e[i] & 0xFF0000) >> 16),
+                "y": ((e[i] & 0xFF00) >> 8),
+                "timestamp": (e[i] & 0xFF),
+                "result": (((e[i] & 0xF000000) >> 24) & 1111)
+            });
+        }
+    }
+
+    function exportFB() { //can you guess what this does? I bet you can. If not, just try harder until someone offers up a solution :)
+        eval("var match" + payload.match + " = payload;");
+        eval("firebase.database().ref('2019txaus/" + payload.team + "').update({match" + payload.match + "});");
+    }
+    var max = 1; //can you guess what this is for? no? it's for the heatmaps, silly
+</script>
+
+<style>
+    .inputButton {
+        display: inline-block;
+        height: 300px;
+        width: 100%;
+        cursor: pointer;
+        background-color: rgb(200, 200, 200);
+        margin: auto;
+        text-align: center;
+        font-size: 50px;
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    .inputButton > input[type=file] {
+        position: absolute;
+        overflow: hidden;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+    }
+
+    .messageDisplay {
+        width: 100%;
+        margin: auto;
+        text-align: center;
+        font-size: 30px;
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    .tabE {
+        border-top-style: solid;
+        border-top-color: grey;
+        border-right-style: solid;
+        border-left-style: solid;
+        border-right-color: black;
+        border-left-color: black;
+        user-select: none;
+        font-family: 'Courier New', Courier, monospace;
+        height: 100%;
+    }
+
+    .a {
+        font-size: 30px;
+    }
+
+    .heated {
+        top: 5px;
+        margin: auto;
+    }
+
+    .teamTable {
+        border-collapse: collapse;
+    }
+
+    .matchTable {
+        border-collapse: collapse;
+    }
+
+    .teamTable tr:nth-child(even){background-color: #f2f2f2;}
+    .matchTable tr:nth-child(even){background-color: #f2f2f2;}
+</style>
